@@ -1,0 +1,120 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+  \usepackage{amssymb}
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{tikz,amsmath,siunitx}
+\usetikzlibrary{arrows,decorations,backgrounds,patterns,matrix,shapes,fit,calc,shadows,plotmarks, arrows.meta, bayesnet}
+\usepackage[graphics,tightpage,active]{preview}
+\PreviewEnvironment{tikzpicture}
+\PreviewEnvironment{equation}
+\PreviewEnvironment{equation*}
+\newlength{\imagewidth}
+\newlength{\imagescale}
+\pagestyle{empty}
+\thispagestyle{empty}
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+
+\tikz{ %
+
+% Dibujamos las variables latentes:
+\node[latent, circle, yshift=-2.5cm, xshift=-3cm, scale = 0.75, minimum size = 2cm] (S_1) {Anxiety} ; %
+\node[latent, circle, yshift=-4.5cm, xshift=-3cm, scale = 0.75, minimum size = 2cm] (S_2) {Depression} ; %
+\node[latent, circle, yshift=-6.5cm, xshift=-3cm, scale = 0.75, minimum size = 2cm] (S_3) {Sociability} ; %
+\node[latent, circle, yshift=-8.5cm, xshift=-3cm, scale = 0.75, minimum size = 2cm] (S_4) {Asertivity} ; %
+\node[latent, circle, yshift=-3.5cm, xshift=3cm, scale = 0.75, minimum size = 2.25cm] (G_1) {Neuroticism} ; %
+\node[latent, circle, yshift=-7.5cm, xshift=3cm, scale = 0.75, minimum size = 2.25cm] (G_2) {Extraversion} ; %
+
+% Dibujamos los items:
+\node[obs, rectangle, yshift=-2cm, xshift=0cm, minimum size=0.70cm, outer sep=1, scale = 1] (item_1) {\fontsize{7}{8}\selectfont X1} ; %
+\node[obs, rectangle, yshift=-3cm, xshift=0cm, minimum size=0.70cm, outer sep=1, scale = 1] (item_2) {\fontsize{7}{8}\selectfont X2} ; %
+\node[obs, rectangle, yshift=-4cm, xshift=0cm, minimum size=0.70cm, outer sep=1, scale = 1] (item_3) {\fontsize{7}{8}\selectfont X3} ; %
+\node[obs, rectangle, yshift=-5cm, xshift=0cm, minimum size=0.70cm, outer sep=1, scale = 1] (item_4) {\fontsize{7}{8}\selectfont X4} ; %
+\node[obs, rectangle, yshift=-6cm, xshift=0cm, minimum size=0.70cm, outer sep=1, scale = 1] (item_5) {\fontsize{7}{8}\selectfont X5} ; %
+\node[obs, rectangle, yshift=-7cm, xshift=0cm, minimum size=0.70cm, outer sep=1, scale = 1] (item_6) {\fontsize{7}{8}\selectfont X6} ; %
+\node[obs, rectangle, yshift=-8cm, xshift=0cm, minimum size=0.70cm, outer sep=1, scale = 1] (item_7) {\fontsize{7}{8}\selectfont X7} ; %
+\node[obs, rectangle, yshift=-9cm, xshift=0cm, minimum size=0.70cm, outer sep=1, scale = 1] (item_8) {\fontsize{7}{8}\selectfont X8} ; %
+
+% Flechas de las latentes a las observables:
+\edge[color = black] {S_1} {item_1, item_2} ; % Flechas de S_1 a item_1 e item_2
+\edge[color = black] {S_2} {item_3, item_4} ; %
+\edge[color = black] {S_3} {item_5, item_6} ; %
+\edge[color = black] {S_4} {item_7, item_8} ; %
+\edge[color = black] {G_1} {item_1, item_2, item_3, item_4} ; %
+\edge[color = black] {G_2} {item_5, item_6, item_7, item_8} ; %
+
+% Pesos cruzados:
+\edge[opacity=0.2] {S_1} {item_3, item_4, item_5, item_6, item_7, item_8} ; %
+\edge[opacity=0.2] {S_2} {item_1, item_2, item_5, item_6, item_7, item_8} ; %
+\edge[opacity=0.2] {S_3} {item_1, item_2, item_5, item_6, item_7, item_8} ; %
+\edge[opacity=0.2] {S_4} {item_1, item_2, item_3, item_4, item_5, item_6} ; %
+\edge[opacity=0.2] {G_1} {item_5, item_6, item_7, item_8} ; %
+\edge[opacity=0.2] {G_2} {item_1, item_2, item_3, item_4} ; %
+
+% Correlacion entre latentes:
+\draw[<->] (G_1) [bend left = 30, shorten >= 0.1cm, shorten <= 0.1cm] to (G_2);
+
+}
+
+\end{document}

@@ -1,0 +1,114 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+  \usepackage{amssymb}
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{tikz,amsmath,siunitx}
+\usetikzlibrary{arrows,decorations,backgrounds,patterns,matrix,shapes,fit,calc,shadows,plotmarks, arrows.meta, bayesnet, math}
+\usepackage[graphics,tightpage,active]{preview}
+\PreviewEnvironment{tikzpicture}
+\PreviewEnvironment{equation}
+\PreviewEnvironment{equation*}
+\newlength{\imagewidth}
+\newlength{\imagescale}
+\pagestyle{empty}
+\thispagestyle{empty}
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+
+\tikz{ %
+ % font={\fontsize{3}{3}\selectfont}}
+\node[latent, xshift=0cm, yshift=-0.5cm, scale = 0.3, line width = 0.01cm, minimum size = 2cm] (S_1) {Depression} ; % ellipse
+\node[latent, xshift=0cm, yshift=-1.25cm, scale = 0.3, line width = 0.01cm, minimum size = 2cm] (S_2) {Anxiety} ; %
+\node[latent, xshift=0cm, yshift=-2cm, scale = 0.3, line width = 0.01cm, minimum size = 2cm] (S_3) {Sociability} ; %
+\node[latent, xshift=0cm, yshift=-2.75cm, scale = 0.3, line width = 0.01cm, minimum size = 2cm] (S_4) {Asertivity} ; %
+
+\node[obs, rectangle, xshift=2cm, yshift=-0.25cm, minimum size=0.0cm, outer sep=1, scale = 0.3, align=left, text centered,text width = 0.4\textwidth, text depth = 0.25cm, text height = 0.5cm, inner sep=0cm, outer sep=0cm] (item_1) {I feel sad (X1)} ; %
+\node[obs, rectangle, xshift=2cm, yshift=-0.75cm, minimum size=0cm, outer sep=1, scale = 0.3, align=left, text centered,text width = 0.4\textwidth, text depth = 0.5cm, text height = 0.5cm, inner sep=0cm, outer sep=0cm, above=0cm] (item_2) {I think I am worthless (X2)} ; %
+\node[obs, rectangle, xshift=2cm, yshift=-1cm, minimum size=0.70cm, outer sep=1, scale = 0.3, align=left, text centered,text width = 0.4\textwidth, text depth = 0.5cm, text height = 0.5cm, inner sep=0cm, outer sep=0cm, above=-0.2cm] (item_3) {I get nervous thinking about pending tasks (X3)} ; %
+\node[obs, rectangle, xshift=2cm, yshift=-1.5cm, minimum size=0.70cm, outer sep=1, scale = 0.3, align=left, text centered,text width = 0.4\textwidth, text depth = 0.25cm, text height = 0.5cm, inner sep=0cm, outer sep=0cm, above=0cm] (item_4) {I am usually tense (X4)} ; %
+\node[obs, rectangle, xshift=2cm, yshift=-1.75cm, minimum size=0.70cm, outer sep=1, scale = 0.3, align=left, text centered,text width = 0.4\textwidth, text depth = 0.25cm, text height = 0.5cm, inner sep=0cm, outer sep=0cm, above=-0.1cm] (item_5) {I like meeting people (X5)} ; %
+\node[obs, rectangle, xshift=2cm, yshift=-2.25cm, minimum size=0.70cm, outer sep=1, scale = 0.3, align=left, text centered,text width = 0.4\textwidth, text depth = 0.5cm, text height = 0.5cm, inner sep=0cm, outer sep=0cm, above=0cm] (item_6) {I enjoy taking part in social activities (X6)} ; %
+\node[obs, rectangle, xshift=2cm, yshift=-2.5cm, minimum size=0.70cm, outer sep=1, scale = 0.3, align=left, text centered,text width = 0.4\textwidth, text depth = 0.5cm, text height = 0.5cm, inner sep=0cm, outer sep=0cm, above=-0.15cm] (item_7) {I take initiative in social situations (X7)} ; %
+\node[obs, rectangle, xshift=2cm, yshift=-3cm, minimum size=0.70cm, outer sep=1, scale = 0.3, align=left, text centered,text width = 0.4\textwidth, text depth = 0.5cm, text height = 0.5cm, inner sep=0cm, outer sep=0cm, above=0cm] (item_8) {I have the skills to liven up a party (X8)} ; %
+% \node[align=center,font=\large,rotate=90] at (item_8.center) {Storage Advisor};
+\edge[-{Latex[scale = 0.4mm]}] {S_1} {item_1.west, item_2.west} ; %
+\edge[-{Latex[scale = 0.4mm]}] {S_2} {item_3.west, item_4.west} ; %
+\edge[-{Latex[scale = 0.4mm]}] {S_3} {item_5.west, item_6.west} ; %
+\edge[-{Latex[scale = 0.4mm]}] {S_4} {item_7.west, item_8.west} ; % -, -to, color = black, line width=0.01cm, shorten >=0cm
+\node[latent, xshift=4cm, yshift=-0.875cm, scale = 0.3, line width = 0.01cm, minimum size = 2.25cm] (G_1) {Neuroticism} ; %
+\node[latent, xshift=4cm, yshift=-2.375cm, scale = 0.3, line width = 0.01cm, minimum size = 2.25cm] (G_2) {Extraversion} ; %
+\edge[-{Latex[scale = 0.4mm]}] {G_1} {item_1.east, item_2.east, item_3.east, item_4.east} ; %
+\edge[-{Latex[scale = 0.4mm]}] {G_2} {item_5.east, item_6.east, item_7.east, item_8.east} ; %
+% -{Triangle[scale = 0.05cm]}
+% \path (S_1) edge [loop above] node (S_1') {$\theta$} (S_1);
+% \plate [inner sep=0cm] {plate2} {(S_3)(S_4)} {Extraversión}; %
+% \draw[-{>[scale=10]}] (0,0) -- (1,0);
+% \edge {G_1} {item_1, item_2, item_3, item_4} ; %
+% \plate [color = red, inner sep=.10cm, xshift = 0, yshift=0.3cm,transform shape=true] {plate1} {(item_1)(item_2)(item_3)(item_4)} {}; %
+% \coordinate [label=center: \fontsize{3.5}{3}\selectfont \sffamily Neuroticismo] (a) at (2, 0.05);
+% \plate [color = blue, inner sep=.10cm, xshift = 0, yshift=-0.08cm,transform shape=true] {plate1} {(item_5)(item_6)(item_7)(item_8)} {} ; %
+% \coordinate [label=center: \fontsize{3.5}{3}\selectfont \sffamily Extroversión] (a) at (2, -3.2);
+}
+
+\end{document}

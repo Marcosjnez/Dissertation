@@ -1,0 +1,1067 @@
+---
+title: "The bifactor model with multiple general factors"
+date: "2026-05-06"
+author: "Marcos José Jiménez Henríquez"
+format:
+  pdf:
+    pdf-engine: pdflatex
+    number-sections: true
+    toc: true
+    include-in-header:
+      text: |
+        \usepackage{amsmath,amssymb,amsfonts,mathtools}
+        \usepackage{bm}         % for \bm{...} bold math (incl. Greek)
+        \usepackage{lmodern}    % Latin Modern (updated Computer Modern)
+        \usepackage{graphicx}
+        \usepackage{pdfpages}
+fontsize: 12pt
+bibliography: references.bib
+---
+
+# Declaration{-}
+
+I solemnly affirm that all content presented in this dissertation represents my own independent work and has not been previously submitted, either entirely or partially, for evaluation for any other degree or academic credential at this institution or any other educational establishment.
+
+Marcos José Jiménez Henríquez
+
+January 2026
+
+# Abstract{-}
+
+# Chapter 1: Introduction
+
+Since Charles Spearman introduced the first factor-analytic formulation of general intelligence [@spearman_1904] and Louis Thurstone extended this framework to the multidimensional case [@thurstone_1931; @thurstone_1934], the factor model has become one of the most versatile statistical tools in psychology. Its appeal lies in a simple but powerful idea: the covariation among a set of observed variables can be represented by a smaller number of latent dimensions that are not observed directly but are inferred from their empirical consequences.
+
+The subsequent development of confirmatory factor analysis and structural equation modeling made it possible to move from the exploratory discovery of latent dimensions to the formal testing of substantive measurement hypotheses. In this respect, the contributions of Jöreskog were particularly influential, both for the specification of restricted factor models [@joreskog_1969] and for computationally efficient parameterizations of the maximum likelihood problem [@joreskog_1977]. This development did not stop at measurement models, but expanded to structural relations among latent variables and longitudinal data [@joreskog_1982]. More recently, technical advances in factor rotation and exploratory structural equation modeling have made it possible to formulate more flexible measurement theories from an exploratory stance [@jennrich_2001; @jennrich_2002; @asparouhov_2009; @jennrich_2011; @jennrich_2012]. At the same time, both free open-source and commercial software has made these models accessible to applied researchers in psychology and in many other disciplines [@lavaan; @mplus].
+
+It is therefore striking that, more than 100 years after the origins of factor analysis, several important extensions of the factor model are still being actively developed. This is not because the core model is immature, but because the questions asked in psychological measurement have become increasingly complex. Modern instruments are often large, multidimensional, hierarchically organized, and expected to support several levels of variance decomposition at once. Consequently, the methodological problem is no longer only how to estimate a factor model, but how to estimate factor models that are sufficiently flexible to represent realistic psychological structures without losing their interpretability.
+
+## Motivation
+
+Psychological measurement models are increasingly framed as hierarchical and multidimensional. In many applications, items are written to represent relatively narrow abilities, symptoms, traits, or facets, while these narrower dimensions are themselves assumed to belong to broader latent domains. This organization is especially common in areas such as intelligence, personality, and psychopathology, where theoretical models often distinguish between specific content domains and more general sources of psychological differences.
+
+Bifactor models have become a popular way to represent this type of structure because each item can simultaneously indicate a broad dimension and a more specific one. In this framework, the general factor accounts for the variance that is shared across a broad set of items, whereas the group or specific factors account for residual common variance among subsets of items after the general factor has been taken into account. In other words, the model attempts to disentangle what is common across the whole instrument from what remains domain-specific.
+
+Classic bifactor applications usually assume a single general factor, such as a general psychopathology factor or a general ability factor. However, many contemporary psychological theories do not posit one overarching dimension only. Instead, they often assume several broad dimensions, each of which organizes a set of narrower facets. This circumstance motivates bifactor structures with multiple general factors, where different item domains are anchored by different broad traits that may also be correlated with one another. In these settings, the bifactor model is not merely a technical convenience, but a statistical representation of substantive claims about how psychological domains are organized and how they relate to each other.
+
+This dissertation focuses on this general problem. More concretely, it studies exploratory methods for hierarchical factor structures in which several general factors and several specific factors may coexist. This requires first reviewing the common factor model, its estimation, and the role of rotation.
+
+## The common factor model
+
+Let $\mathbf{X}$ be an $n\times p$ matrix of observed centered scores, provided by $n$ individuals on $p$ observed variables. A convenient matrix representation of the common factor model is
+
+$$
+\mathbf{X} = \mathbf{F}\mathbf{\Lambda}^\top + \mathbf{U}\mathbf{\Psi}.
+$$ {#eq-factor}
+
+In @eq-factor, $\mathbf{F}$ is an $n\times q$ matrix of common factor scores and $\mathbf{\Lambda}$ is a $p\times q$ matrix of regression coefficients, usually called factor loadings. The matrix $\mathbf{U}$ is an $n\times p$ matrix of unique factors, whereas $\mathbf{\Psi}^\top \mathbf{\Psi}$ is a positive-definite $p\times p$ matrix containing the covariance structure of the unique components.^[Usually, $\mathbf{\Psi}$ is chosen to be diagonal. However, in Chapter 6 we will exploit the possibility of using a nonsymmetric and dense $\mathbf{\Psi}$ that still yields a positive-definite covariance matrix for the error terms.] Whereas $\mathbf{F}$ and $\mathbf{U}$ are random quantities, $\mathbf{\Lambda}$ and $\mathbf{\Psi}$ are fixed parameters of the model.
+
+In most factor-analytic applications, the primary inferential interest lies in the fixed parameters. The loading matrix $\mathbf{\Lambda}$ indicates how strongly each observed variable is related to each common factor. By contrast, $\mathbf{\Psi}^\top \mathbf{\Psi}$ represents the part of the covariance structure that is not explained by the common factors. Its diagonal elements are the unique variances of the observed variables whereas its off-diagonal elements represent residual dependencies that are not accounted for by the common factors.
+
+Premultiplying @eq-factor by $\mathbf{X}^\top$ and taking expectations gives
+
+$$
+\mathbb{E}[\mathbf{X}^\top \mathbf{X}] = \mathbf{\Lambda} \mathbb{E}[\mathbf{F}^\top \mathbf{F}] \mathbf{\Lambda}^\top + \mathbf{\Lambda} \mathbb{E}[\mathbf{F}^\top \mathbf{U}] \mathbf{\Psi} + \mathbf{\Psi}^\top \mathbb{E}[\mathbf{U}^\top \mathbf{F}] \mathbf{\Lambda}^\top + \mathbf{\Psi}^\top \mathbb{E}[\mathbf{U}^\top \mathbf{U}] \mathbf{\Psi}.
+$$
+
+At this point, some simplifying assumptions are typically introduced. The common and unique factors are assumed to be centered, so that $\mathbb{E}[\mathbf{F}^\top \mathbf{1}]=\mathbf{0}$ and $\mathbb{E}[\mathbf{U}^\top \mathbf{1}]=\mathbf{0}$. They are also assumed to be orthonormal, so that $n^{-1}\mathbb{E}[\mathbf{F}^\top \mathbf{F}] = \mathbf{I}_q$ and $n^{-1}\mathbb{E}[\mathbf{U}^\top \mathbf{U}] = \mathbf{I}_p$, and linearly independent, so that $\mathbb{E}[\mathbf{F}^\top \mathbf{U}] = \mathbf{0}$. Under these assumptions, the covariance matrix of $\mathbf{X}$ can be expressed as
+
+$$
+\begin{aligned}
+\mathbf{\Sigma} &= n^{-1}\mathbb{E}[\mathbf{X}^\top \mathbf{X}] \\
+&= \mathbf{\Lambda}\mathbf{\Lambda}^\top + \mathbf{\Psi}^\top \mathbf{\Psi}.
+\end{aligned}
+$$ {#eq-factorR}
+
+Therefore, the sample covariance matrix $\mathbf{S}$ can be treated as a sufficient statistic for estimating the fixed parameters of the model. The estimation problem then consists of choosing parameter estimates $\hat{\mathbf{\Lambda}}$ and $\hat{\mathbf{\Psi}}$ such that the model-implied covariance matrix
+
+$$
+\hat{\mathbf{\Sigma}} = \hat{\mathbf{\Lambda}} \hat{\mathbf{\Lambda}}^\top + \hat{\mathbf{\Psi}}^\top \hat{\mathbf{\Psi}}
+$$ {#eq-factormodel-orth}
+
+approximates $\mathbf{S}$ according to a given loss function. In other words, factor analysis can be viewed as the search for a structured covariance matrix that is close to the observed covariance matrix, but whose structure is sufficiently parsimonious to support interpretation.
+
+## Estimation of the fixed parameters
+
+The covariance matrix $\mathbf{S}$ contains $p(p+1)/2$ non-redundant pieces of information. However, the unrestricted parameterization in @eq-factorR contains $pq$ parameters in $\mathbf{\Lambda}$ and, potentially, $p^2$ parameters in $\mathbf{\Psi}$. Consequently, the model is not identifiable unless additional restrictions are imposed. A common choice is to assume that $\mathbf{\Psi}$ is diagonal, in which case the number of free parameters is reduced to $pq+p$ before accounting for the rotational indeterminacy of the loading matrix.
+
+This rotational indeterminacy is a second source of non-identifiability. The term $\mathbf{\Lambda}\mathbf{\Lambda}^\top$ is unchanged if $\mathbf{\Lambda}$ is replaced by $\mathbf{\Lambda}\mathbf{T}$, where $\mathbf{T}$ is an orthonormal $q\times q$ matrix. Therefore, the same model-implied covariance matrix can be represented by infinitely many loading matrices. Because an orthonormal matrix contains $q(q-1)/2$ degrees of freedom, the same number of constraints must be imposed on $\mathbf{\Lambda}$ to obtain a unique solution (up to a sign change). Common choices include fixing a sufficient number of loadings to zero, for example by imposing a lower-triangular structure, or constraining the loading matrix to lie on the Stiefel manifold [@absil_2010]. Other parameterizations are especially convenient for maximum likelihood estimation, such as forcing the symmetric matrix $\mathbf{\Lambda}^\top \mathbf{\Psi}^{-\top}\mathbf{\Psi}^{-1}\mathbf{\Lambda}$ to be diagonal [@joreskog_1977].
+
+In the end, a necessary counting rule for the unrestricted common factor model is that the number of effective parameters cannot exceed the number of independent elements in the covariance matrix:
+
+$$
+\frac{p(p+1)}{2} \geq pq + p - \frac{q(q-1)}{2}.
+$$
+
+Rearranging terms yields the quadratic inequality
+
+$$
+q^2 - q(2p+1) + p(p-1) \geq 0.
+$$
+
+Solving this inequality gives the familiar upper bound
+
+$$
+q \leq \frac{2p + 1 - \sqrt{8p+1}}{2},
+$$
+
+which is commonly known as the Ledermann bound [@ledermann_1937]. This bound is only a necessary condition and does not guarantee identifiability ^[Note also, that estimating error covariances would alter the Ledermann inequality.], but it is useful for understanding why the number of factors cannot be increased arbitrarily without imposing additional constraints.
+
+Once the parameters and identification constraints have been specified, several fitting functions can be used to estimate the model. The following subsections review the two families of estimators that are most relevant for the rest of the dissertation: maximum likelihood and least-squares estimators.
+
+### Maximum likelihood
+
+Assume that a single centered response vector $\mathbf{x}_i$ follows a multivariate normal distribution, $\mathbf{x}_i \sim \mathcal{N}(\mathbf{0}, \mathbf{\Sigma})$. Its log-likelihood is
+
+$$
+\ell_i = -\frac{p}{2} \log(2\pi) - \frac{1}{2}\log |\mathbf{\Sigma}| - \frac{1}{2} \mathbf{x}_i^\top \mathbf{\Sigma}^{-1} \mathbf{x}_i.
+$$
+
+If the $n$ response vectors are independent and identically distributed, the log-likelihood becomes
+
+$$
+\begin{aligned}
+\ell &= -\frac{np}{2} \log(2\pi) - \frac{n}{2}\log |\mathbf{\Sigma}| - \frac{1}{2} \sum^n_{i=1} \mathbf{x}_i^\top \mathbf{\Sigma}^{-1} \mathbf{x}_i \\
+&= -\frac{np}{2} \log(2\pi) - \frac{n}{2}\log |\mathbf{\Sigma}| - \frac{1}{2} \sum^n_{i=1} \mathrm{tr}(\mathbf{x}_i \mathbf{x}_i^\top \mathbf{\Sigma}^{-1}) \\
+&= -\frac{np}{2} \log(2\pi) - \frac{n}{2}\log |\mathbf{\Sigma}| - \frac{n}{2} \mathrm{tr}(\mathbf{S} \mathbf{\Sigma}^{-1}).
+\end{aligned}
+$$
+
+For optimization purposes, $\mathbf{\Sigma}$ is replaced by the model-implied covariance matrix $\hat{\mathbf{\Sigma}}$. However, the log-likelihood is usually not maximized in this form. Once the constants terms are dropped and we add the constants $-\log|\mathbf{S}|-p$, we arrive at the discrepancy function
+
+$$
+F_{ML} = \log |\hat{\mathbf{\Sigma}}| + \mathrm{tr}(\mathbf{S} \hat{\mathbf{\Sigma}}^{-1}) - \log|\mathbf{S}| - p.
+$$ {#eq-ML}
+
+Minimizing @eq-ML is equivalent to maximizing the log-likelihood, but with the property that $F_{ML}=0$ when $\mathbf{S}=\hat{\mathbf{\Sigma}}$. Thus, the maximum likelihood discrepancy can be interpreted as the distance between the fitted model and the saturated model that reproduces the sample covariance matrix exactly.
+
+### Least-squares
+
+An alternative family of estimators minimizes residual discrepancies between $\mathbf{S}$ and $\hat{\mathbf{\Sigma}}$ directly. The simplest version is the unweighted least-squares criterion,
+
+$$
+F_{LS} = \frac{1}{2} \lVert \mathbf{S}-\hat{\mathbf{\Sigma}} \rVert^2.
+$$ {#eq-ULS}
+
+Because the elements of the covariance matrix usually have different sampling variances, it is often preferable to use a weighted criterion. A weighted least-squares discrepancy can then be written as
+
+<!-- $$ -->
+<!-- F_{WLS} = \frac{1}{2}(\mathbf{s}-\hat{\boldsymbol{\sigma}})^\top \mathbf{W}(\mathbf{s}-\hat{\boldsymbol{\sigma}}), -->
+<!-- $$ {#eq-DWLS} -->
+
+$$
+F_{DWLS} = \frac{1}{2} \mathbf{W} \odot \lVert \mathbf{S}-\mathbf{\hat{\Sigma}} \rVert^2,
+$$ {#eq-DWLS}
+
+where $\mathbf{W}$ is a $p\times p$ matrix with the inverse of the asymptotic variances of $\mathbf{S}$. This approach is generally regarded as *Diagonally Weighted Least-Squares* and it is especially relevant for ordinal data, where the sufficient statistics are polychoric correlations rather than ordinary covariances.
+
+## Factor rotation
+
+The restrictions imposed on $\hat{\mathbf{\Lambda}}$ during estimation are usually chosen for mathematical convenience rather than for substantive interpretation. For instance, a lower-triangular loading matrix may identify the model, but the resulting pattern is rarely the one that best represents the psychological theory under study. For this reason, after estimating the fixed parameters, it is common to transform the loading matrix without changing the model fit, so that the transformed solution satisfies a desirable interpretive criterion.
+
+Consider first the orthogonal parameterization $\hat{\mathbf{\Lambda}}^\ast = \hat{\mathbf{\Lambda}}\mathbf{T}$, where $\mathbf{T}$ is an orthonormal matrix. The purpose of rotation is to estimate the transformation $\hat{\mathbf{T}}$ that optimizes a complexity function $Q$ [@browne_2001]. A typical goal is to obtain a sparse or simple loading matrix, where each item has high loadings on only a small number of factors and near-zero loadings on the remaining factors.
+
+One classical example is the varimax criterion. Let $\mathbf{H} = \mathbf{I} - \mathbf{1}\mathbf{1}^\top p^{-1}.$
+
+Then a compact representation of the varimax criterion is
+
+$$
+Q = \frac{1}{2} \lVert \mathbf{H} (\hat{\mathbf{\Lambda}}^{\ast})^2 \rVert^2,
+$$
+
+which is maximized when the squared loadings within each column are as dispersed as possible, thereby encouraging each factor to have a subset of salient indicators.
+
+Another important criterion is quartimin,
+
+$$
+Q = \frac{1}{2} \lVert (\hat{\mathbf{\Lambda}}^{\ast})^2 \odot \left((\hat{\mathbf{\Lambda}}^{\ast})^2\mathbf{N}\right) \rVert,
+$$
+
+where $\mathbf{N}$ is a matrix with zeros on the diagonal and ones elsewhere. The criterion adds products of squared loadings within each row, excluding products of a loading with itself. Therefore, it is minimized when each item loads mainly on one factor and its remaining loadings are close to zero.
+
+After orthogonal rotation, the original identification constraints are transferred to the rotated solution. More precisely, the $q(q-1)/2$ constraints imply that
+
+$$
+\hat{\mathbf{\Lambda}}^{\ast\top} \Delta Q_{\hat{\mathbf{\Lambda}}^\ast}
+$$ {#eq-orth_constraints}
+
+must be symmetric, where $\Delta Q_{\hat{\mathbf{\Lambda}}^\ast}$ is the gradient of the rotation criterion with respect to the rotated loading matrix.
+
+Alternatively, one may use the oblique parameterization $\hat{\mathbf{\Lambda}}^\ast = \hat{\mathbf{\Lambda}}\mathbf{T}^{-\top}$, where $\mathbf{T}$ is a nonsingular transformation matrix and $\mathbf{\Phi}=\mathbf{T}^\top\mathbf{T}$ is the factor correlation matrix. In this case, @eq-factormodel-orth becomes
+
+$$
+\hat{\mathbf{\Sigma}} = \hat{\mathbf{\Lambda}}^\ast \mathbf{\Phi} \hat{\mathbf{\Lambda}}^{\ast\top} + \hat{\mathbf{\Psi}}^\top \hat{\mathbf{\Psi}}.
+$$ {#eq-factormodel-oblq}
+
+After oblique rotation, the original constraints translate into the requirement that
+
+$$
+\hat{\mathbf{\Lambda}}^{\ast\top} \Delta Q_{\hat{\mathbf{\Lambda}}^\ast} \mathbf{\Phi}^{-1} - 2\Delta Q_{\hat{\mathbf{\Phi}}}
+$$ {#eq-oblq_constraints}
+
+be diagonal [@zhang_2019].^[These oblique constraints can be simplified to $\hat{\mathbf{\Lambda}}^{\ast\top} \Delta Q_{\hat{\mathbf{\Lambda}}^\ast} \mathbf{\Phi}^{-1}$ when the rotation criterion does not depend on $\mathbf{\Phi}$ [@jennrich_1973].] There are $q(q-1)$ constraints in total because $q(q-1)/2$ additional degrees of freedom are released to estimate the correlations among the factors.
+
+## Standard errors of fixed parameters
+
+Let $F_\theta$ denote the loss function of the factor model, let $\boldsymbol{\theta}$ be a vector collecting the fixed parameters, let $\mathbf{H}_{\theta}$ be the Hessian matrix with respect to those parameters, and let $\mathbf{\Gamma}$ be the asymptotic covariance matrix of the sample covariance elements. Using a sandwich argument [@zhang_2014], the asymptotic covariance matrix of the estimated fixed parameters can be written schematically as
+
+$$
+\mathrm{COV}(\boldsymbol{\theta}) = \mathbf{H}_{\theta}^{-1} \left( \mathbf{J}_{\theta s}^\top \mathbf{\Gamma} \mathbf{J}_{\theta s} \right) \mathbf{H}_{\theta}^{-1},
+$$ {#eq-seFA}
+
+where $\mathbf{J}_{\theta s} = \frac{\partial^2 F}{\partial \theta_i s_j}$ is a jacobian containing the mixed derivatives of the fitting function with respect to the model parameters and the sample covariance elements. This expression makes explicit that the uncertainty of the estimated parameters is inherited from the sampling variability of the empirical covariance matrix.
+
+Now let $\boldsymbol{\theta}^\ast$ collect the parameters after factor rotation. In this case, the standard errors must account not only for the estimation of the unrotated model, but also for the constraints imposed by the rotation criterion. If $\mathbf{C}_{\theta^\ast}$ contains the derivatives of the new constraints imposed on $\mathbf{\Lambda}^\ast$ and, potentially, on $\mathbf{\Phi}$, the covariance matrix of the rotated parameters can be expressed as
+
+$$
+\mathrm{COV}(\boldsymbol{\theta}^\ast) = [\mathbf{H}_{\theta} \mid \mathbf{C}_{\theta^\ast}]^{-1} \left( \mathbf{J}_{\theta^\ast s}^\top \mathbf{\Gamma} \mathbf{J}_{\theta^\ast s} \right) [\mathbf{H}_{\theta} \mid \mathbf{C}_{\theta^\ast}]^{-1}.
+$$ {#eq-seEFA}
+
+The matrix $\mathbf{C}_{\theta^\ast}$ depends on the type of rotation. For orthogonal rotations, the relevant constraints are those in @eq-orth_constraints. For oblique rotations, they are those in @eq-oblq_constraints. Therefore, standard errors for rotated solutions are not obtained by simply applying the unrotated covariance matrix to the transformed loadings; the uncertainty introduced by the rotation constraints must be taken into account.
+
+## Estimation of the random parameters
+
+After estimating the fixed parameters $\mathbf{\Lambda}$ and $\mathbf{\Psi}$, one may also want to estimate the latent factor scores. However, the factor scores cannot be recovered by simply taking expectations in
+
+$$
+\mathbb{E}[\mathbf{X}] = \mathbb{E}[\mathbf{F}]\mathbf{\Lambda}^\top + \mathbb{E}[\mathbf{U}] \mathbf{\Psi},
+$$
+
+because all terms have expectation zero under the assumptions of the model. Factor score estimation is therefore a prediction problem rather than a direct one.
+
+One common approach is to estimate the matrix $\mathbf{B}$ that minimizes the expected squared difference between the true and estimated factor scores, that is, the matrix that maximizes predictive validity [@diestefano_2009]:
+
+$$
+\underset{\mathbf{B}}{\arg\min}\; \mathbb{E} \left[ \lVert \mathbf{F}-\mathbf{X}\mathbf{B} \rVert^2 \right].
+$$ {#eq-regression_scores}
+
+This is a least-squares problem whose population solution is
+
+$$
+\begin{aligned}
+\mathbf{B} &= \mathbb{E}[\mathbf{X}^\top \mathbf{X}]^{-1} \; \mathbb{E}[\mathbf{X}^\top \mathbf{F}] \\
+&= \mathbf{\Sigma}^{-1} \mathbf{\Lambda} \mathbf{\Phi},
+\end{aligned}
+$$
+
+where $\mathbf{\Phi}$ is the covariance matrix of the common factors. Replacing the population quantities by their sample estimates yields
+
+$$
+\hat{\mathbf{B}} = \mathbf{S}^{-1} \hat{\mathbf{\Lambda}} \hat{\mathbf{\Phi}},
+$$
+
+and hence
+
+$$
+\hat{\mathbf{F}} = \mathbf{X}\mathbf{S}^{-1} \hat{\mathbf{\Lambda}} \hat{\mathbf{\Phi}}.
+$$
+
+The $\hat{\mathbf{F}}$ obtained in this way are usually regarded as Thomson's or Thurstone's regression scores.
+
+A limitation of this regression method is that the estimated scores carry sampling error from $\mathbf{S}$, $\hat{\mathbf{\Lambda}}$, and $\hat{\mathbf{\Phi}}$. Consequently, the sample covariance matrix of $\hat{\mathbf{F}}$ does not match $\hat{\mathbf{\Phi}}$. In other words, although it is unnecessary to force $n^{-1}\hat{\mathbf{F}}^\top\hat{\mathbf{F}} = \hat{\mathbf{\Phi}}$ in any particular sample, it should be true that $n^{-1}\mathbb{E}[\hat{\mathbf{F}}^\top\hat{\mathbf{F}}] = \mathbf{\Phi}$, but this is not the case. 
+
+\newpage
+
+# Chapter 2: Hierarchical factor models
+
+The purpose of this chapter is to introduce the family of hierarchical factor models that motivates that contribution and to clarify why exploratory bifactor models with multiple general factors are a natural extension of the traditional factor-analytic framework.
+
+Historically, the idea that psychological test scores may contain both broad and narrow sources of variance can be traced back to Spearman's two-factor theory [@spearman_1904]. Spearman argued that diverse intellectual tasks are positively correlated because they share a common source of individual differences, while each task also contains variance that is specific to that task. This distinction is the conceptual origin of the later separation between a general factor and specific factors. The basic idea of Spearman can be represented as
+
+$$
+X_i = \lambda_i g + s_i + e_i,
+$$
+
+where $X_i$ is the score on test $i$, $g$ is the general factor, $\lambda_i$ is the loading of the test on that factor, $s_i$ is the test-specific component, and $e_i$ is measurement error. Across diverse tasks, the shared variance is attributed to the general factor. Within tasks, additional common variance may appear, giving rise to what later came to be interpreted as group or domain-specific factors.
+
+This early distinction already contains a hierarchical intuition. Tests differ in their saturation with the broad factor, and those differences make it possible to order indicators and domains according to their generality. However, the term *hierarchy* has acquired several meanings in factor analysis. In some contexts, it refers to second-order models, where first-order factors are themselves indicators of higher-order factors. In other contexts, it refers to bifactor models, where general and specific factors act directly on the observed variables. This terminological ambiguity has fostered debate about whether bifactor models should be included in the family of hierarchical models [@markon_2019].
+
+One useful distinction is to refer to higher-order models as indirect hierarchical models and bifactor models as direct hierarchical models [@gignac_2008; @gignac_2016]. This terminology emphasizes the difference between mediated and direct effects of the general factor on the items. In a higher-order model, the general factor affects the observed variables through the first-order factors. In a bifactor model, the general factor affects the observed variables directly. Nevertheless, the classification is not merely terminological. It has consequences for model fit, parameter interpretation, and the meaning of the specific factors, especially because the bifactor representation dissentagles the general-factor variance from the group factors.
+
+In this dissertation, hierarchical factor models are understood as models that contain latent dimensions at different levels of generality. General factors encompass the meaning of one or more specific factors, either because they explain the covariance among those specific factors, as in second-order models, or because they are directly defined by items that also measure narrower domains, as in bifactor models. This broad definition is useful because it allows higher-order and bifactor models to be discussed within a common framework, while still preserving the important differences between them.
+
+## The second-order factor model
+
+After fitting a measurement model that relates observed variables to first-order factors, the factors themselves can be interpreted as indicators of higher-order factors. Let $\mathbf{\Phi}_S$ be the covariance matrix of the first-order or specific factors. A second-order factor model can be written as
+
+$$
+\mathbf{\Phi}_S = \mathbf{\Lambda}_G \mathbf{\Phi}_G \mathbf{\Lambda}_G^\top + \mathbf{\Psi}_G^\top \mathbf{\Psi}_G,
+$$
+
+where $\mathbf{\Lambda}_G$ contains the loadings of the first-order factors on the general factors, $\mathbf{\Phi}_G$ is the covariance matrix of the general factors, and $\mathbf{\Psi}_G^\top \mathbf{\Psi}_G$ is the covariance matrix of the residual components of the first-order factors.
+
+Equivalently, if $\mathbf{F}_S$ denotes the matrix of first-order factor scores and $\mathbf{F}_G$ denotes the matrix of general factor scores, the second-order representation can be expressed as
+
+$$
+\mathbf{F}_S = \mathbf{F}_G\mathbf{\Lambda}_G^\top + \mathbf{U}_G\mathbf{\Psi}_G,
+$$
+
+where $\mathbf{U}_G$ contains the residual components of the first-order factors. Substituting this representation into the item-level measurement model gives
+
+$$
+\hat{\mathbf{\Sigma}} = \hat{\mathbf{\Lambda}}_S \left( \mathbf{\Lambda}_G \mathbf{\Phi}_G \mathbf{\Lambda}_G^\top + \mathbf{\Psi}_G^\top \mathbf{\Psi}_G \right) \hat{\mathbf{\Lambda}}_S^\top + \hat{\mathbf{\Psi}}^\top \hat{\mathbf{\Psi}},
+$$ {#eq-hierfactormodel-oblq}
+
+where $\hat{\mathbf{\Lambda}}_S$ is the item loading matrix on the first-order factors.
+
+<!-- $$ -->
+<!-- \mathbf{\hat{\Sigma}} = \mathbf{\hat{\Lambda}}^\ast \Big( \mathbf{\Lambda}_G \mathbf{\Phi}_G \mathbf{\Lambda}_G^\top + \mathbf{\Psi}_G^\top \mathbf{\Psi}_G \Big) \mathbf{\hat{\Lambda}}^{\overset{\top}{\ast}} + \mathbf{\hat{\Psi}^\top \hat{\Psi}}. -->
+<!-- $$ {#eq-hierfactormodel-oblq} -->
+
+A second-order model can therefore be seen as a model for the covariance structure among the first-order factors. When the second-order model reproduces $\mathbf{\Phi}_S$ exactly, the implied item covariance matrix is the same as in the original correlated-factors model. In that case, the higher-order representation changes the interpretation of the latent structure but not the model fit. However, when the second-order structure imposes restrictions on $\mathbf{\Phi}_S$, as happens when a small number of general factors is used to explain a larger number of first-order factors with diagonal residuals, the higher-order model is more restrictive than the correlated-factors model. Thus, the choice between a correlated-factors model and a second-order model is partly substantive and partly statistical: the second-order model provides a theory of why the first-order factors covary, but it may also constrain the covariance structure among them.
+
+## The bifactor model
+
+The bifactor model represents an alternative way of formalizing hierarchical measurement. Instead of allowing the general factor to affect the items indirectly through first-order factors, the bifactor model allows the general factor and the group factors to load directly on the observed variables. The model was originally introduced by Holzinger and Swineford [@holzinger_1937] as an extension of Spearman's two-factor logic to situations in which several group factors are present. In the most common orthogonal specification, all items load on a general factor, subsets of items load on group factors, and all factors are mutually orthogonal.
+
+This direct representation has important consequences. A bifactor model is not only a reinterpretation of a correlated-factors or higher-order solution; it can also change model fit because the general factor and the group factors compete directly to explain item covariance. The general factor represents what is common across all items, whereas each group factor represents common variance among a subset of items after the general factor has been partialled out. For this reason, the meaning of the group factors in a bifactor model is narrower than the meaning of the corresponding first-order factors in a correlated-factors or higher-order model.
+
+Bifactor models have become increasingly popular in psychological measurement during the last decade [@reise_2012]. They have been used in areas such as intelligence, personality, health outcomes, and psychopathology because they provide a direct way to evaluate the relative importance of broad and narrow sources of variance. At the same time, they raise difficult questions about the interpretation, reliability, and stability of the group factors, especially when the general factor is strong or when the group factors are defined by only a few indicators (citation¿?).
+
+From an exploratory perspective, bifactor analysis is especially challenging because the desired loading structure is more specific than that of ordinary exploratory factor analysis. The first column, or the set of general-factor columns in the multiple-general-factor case, should capture broad common variance, whereas the remaining columns should display a clustered pattern associated with more specific domains. Several methods have therefore been proposed to obtain exploratory bifactor solutions, ranging from rank-deficient transformations derived from higher-order models to full-rank rotations that directly target the desired bifactor structure.
+
+### Rank-deficient bifactor models
+
+The traditional exploratory route to bifactor solutions is based on the Schmid--Leiman transformation [@schmid_1957]. This procedure starts from an oblique first-order factor solution, fits a higher-order model to the correlations among the first-order factors, and then re-expresses the result as a loading matrix in which the observed variables load directly on one or more general factors and on orthogonalized group factors. The resulting solution preserves the simple structure of the first-order factors while making explicit the contribution of the higher-order factors to the observed variables.
+
+Rank-deficient bifactor models are those in which the bifactor loading matrix is not a full-rank expansion of the original factor space. This is precisely what happens in the Schmid--Leiman solution. Although the transformed matrix appears to contain one general factor plus several group factors, all these columns are linear combinations of the original first-order factor loading matrix. Consequently, the transformation does not create a genuinely higher-dimensional solution; it redistributes the same factor space into general and specific components.
+
+#### The Schmid-Leiman transformation
+
+Conceptually, the Schmid--Leiman transformation can be understood as a way of answering the following question: if a set of correlated first-order factors is partially explained by a higher-order factor, how much of each item's loading on its first-order factor should be attributed to the higher-order factor and how much should remain specific to the first-order domain? The procedure decomposes each first-order loading into two parts. The first part is the contribution that reaches the item through the higher-order factor. The second part is the residual contribution that remains at the group-factor level.
+
+This transformation is useful because it makes the hierarchical structure visible at the item level. Instead of interpreting a general factor only through its loadings on first-order factors, the researcher obtains direct loadings of the items on the general factor. This facilitates the comparison between general and group-factor variance, and it has made the Schmid--Leiman transformation a common tool in applied psychometrics. However, the transformation also inherits the restrictions of the higher-order model from which it is derived. In particular, the general-factor loadings are constrained by the first-order loadings and by the higher-order loadings. Therefore, the Schmid--Leiman solution is best understood as a constrained hierarchical approximation rather than as an unrestricted exploratory bifactor model [@mansolf_2016].
+
+#### The best rank-deficient model
+
+The rank deficiency of the Schmid--Leiman solution was made explicit by Waller [@waller_2018]. Consider a correlated-factors model with item loading matrix $\mathbf{\Lambda}_1$ and factor correlation matrix $\mathbf{\Phi}_1$:
+
+$$
+\mathbf{\Sigma} = \mathbf{\Lambda}_1 \mathbf{\Phi}_1 \mathbf{\Lambda}_1^\top + \mathbf{\Psi}_1^2.
+$$
+
+If the first-order factor correlation matrix is modeled by one general factor,
+
+$$
+\mathbf{\Phi}_1 = \boldsymbol{\lambda}_2 \boldsymbol{\lambda}_2^\top + \mathbf{\Psi}_2^2,
+$$
+
+then the Schmid--Leiman loading matrix can be written as
+
+$$
+\mathbf{B} = [\mathbf{\Lambda}_1\boldsymbol{\lambda}_2 \mid \mathbf{\Lambda}_1\mathbf{\Psi}_2] = [\mathbf{g} \mid \mathbf{D}].
+$$
+
+Both the general-factor column $\mathbf{g}=\mathbf{\Lambda}_1\boldsymbol{\lambda}_2$ and the group-factor columns $\mathbf{D}=\mathbf{\Lambda}_1\mathbf{\Psi}_2$ lie in the column space of $\mathbf{\Lambda}_1$. Consequently, $\mathbf{B}$ cannot have rank $k+1$ when $\mathbf{\Lambda}_1$ has only $k$ columns. The apparent bifactor solution is therefore rank deficient.
+
+This observation is not merely algebraic. It clarifies why an unrestricted exploratory bifactor model can generally fit better than a Schmid--Leiman solution. The latter is constrained by the proportionality relations inherited from the higher-order model, whereas a full-rank bifactor model can estimate general and group-factor loadings more freely. Waller's Direct Schmid--Leiman approach uses this rank-deficient property constructively. Starting from an unrotated $p\times k$ loading matrix $\mathbf{A}$, the matrix is augmented with a zero column,
+
+$$
+\tilde{\mathbf{A}} = [\mathbf{A} \mid \mathbf{0}],
+$$
+
+and then rotated toward a Schmid--Leiman-type target using an orthogonal Procrustes transformation. If the singular value decomposition of $\tilde{\mathbf{A}}^\top \mathbf{B}$ is
+
+$$
+\tilde{\mathbf{A}}^\top \mathbf{B} = \mathbf{P}\mathbf{\Delta}\mathbf{Q}^\top,
+$$
+
+then the optimal orthogonal Procrustes rotation is
+
+$$
+\mathbf{T} = \mathbf{Q}\mathbf{P}^\top,
+$$
+
+and the direct Schmid--Leiman solution is
+
+$$
+\hat{\mathbf{B}} = \tilde{\mathbf{A}}\mathbf{T}.
+$$
+
+This solution is direct because it avoids the usual two-stage workflow consisting of an oblique first-order rotation followed by a second factor analysis of the factor correlations. Instead, it obtains the best-fitting rank-deficient Schmid--Leiman approximation, in a least-squares sense, to a specified target.
+
+Waller also proposed the BiFAD algorithm as an empirical way to construct a Schmid--Leiman-type target when the true bifactor structure is unknown [@waller_2018]. The algorithm first extracts an unrotated $k$-factor solution, rotates it obliquely to simple structure, and then converts the salient loading pattern into an empirical target. A general-factor column is appended to this target, the unrotated loading matrix is augmented with a zero column, and the direct Procrustes step is applied. This yields a direct rank-deficient bifactor solution that can be compared with unrestricted bifactor alternatives.
+
+The same logic can also be used to obtain full-rank non-hierarchical bifactor solutions by extracting $k+1$ factors and rotating them toward a bifactor target. This extension is important because it separates two ideas that are sometimes conflated: the presence of a bifactor loading pattern and the rank-deficient constraints imposed by the Schmid--Leiman transformation.
+
+### Full-rank bifactor models
+
+Full-rank bifactor models do not require the bifactor loading matrix to be a linear transformation of a lower-dimensional first-order solution. Instead, the general and group factors are estimated as distinct dimensions in the same factor space. This greater flexibility is useful when the true data-generating structure does not satisfy the proportionality constraints implied by a higher-order model or by the Schmid--Leiman transformation. However, it also makes the rotation problem more difficult, because not every ordinary rotation criterion encourages a bifactor pattern.
+
+For this reason, exploratory bifactor analysis has largely focused on rotation criteria and target-rotation procedures designed specifically for bifactor structures. The general aim is to obtain a loading matrix in which one or more factors have broad loadings across the item set, while the remaining factors display a sparse, clustered pattern. In the traditional case, the general factor is orthogonal to the group factors. In more flexible variants, the group factors may be allowed to correlate, although this increases both the statistical and interpretive complexity of the solution [@jennrich_2012].
+
+#### Direct methods
+
+Jennrich and Bentler introduced analytic bifactor rotations that adapt standard simplicity criteria to the bifactor case [@jennrich_2011; @jennrich_2012]. The two best-known criteria are biquartimin and bi-geomin. Their defining feature is that the simplicity constraint is applied mainly to the group-factor columns, whereas the general-factor column is allowed to remain broadly saturated. Thus, unlike ordinary rotations that try to simplify all columns, bifactor rotations explicitly protect the general factor from being forced into a clustered pattern.
+
+Biquartimin is closely related to quartimin. It penalizes products of group-factor loadings within the same row, thereby encouraging each item to load on only one group factor in addition to the general factor. Bi-geomin follows the same logic but uses a geomin-type criterion, which tends to be more tolerant of small cross-loadings and can therefore be useful in complex structures. These direct analytic rotations are attractive because they do not require the researcher to specify a target matrix a priori. However, they may also be sensitive to local minima and to the relative strength of the general and group factors, especially when the bifactor structure is weak or when the data contain cross-loadings.
+
+#### Iterative methods (RETAM and SLiD)
+
+Target rotation provides another way to estimate exploratory bifactor models. Rather than defining a fully analytic rotation criterion, the researcher supplies a partially specified target matrix. Elements expected to be zero are fixed as target zeros, whereas elements that may be freely estimated are left unspecified. This is useful in psychological measurement because researchers often know which items are intended to measure which domain, but they may not know the exact magnitude of the loadings or whether some cross-loadings are present.
+
+RETAM is a general procedure for objectively refining partially specified target matrices [@lorenzo_2020]. Given an unrotated loading matrix $\mathbf{A}$ and an initial researcher-specified target $\mathbf{H}^\ast$, the first step is an initial Procrustes rotation:
+
+$$
+\mathbf{S}_0 = \operatorname{Procrustes}(\mathbf{A};\, \mathbf{H}^\ast).
+$$ {#eq-retam1}
+
+The rotated loading matrix $\mathbf{B}=\mathbf{A}\mathbf{S}_0$ is then row-normalized to obtain $\mathbf{C}$. For each factor column $j$, let $v_j$ and $s_j$ be the mean and standard deviation of the squared entries in that column of $\mathbf{C}$. RETAM defines the column-wise threshold as
+
+$$
+t_j = v_j + \frac{s_j}{4}.
+$$ {#eq-retam2}
+
+The target matrix is then refined by comparing each $c_{ij}^2$ with $t_j$. Depending on the refinement rule, elements are set to specified zeros or left unspecified. The updated target matrix $\mathbf{H}_k^\ast$ is then used to compute a new Procrustes transformation,
+
+$$
+\mathbf{S}_k = \operatorname{Procrustes}(\mathbf{A};\, \mathbf{H}_k^\ast).
+$$ {#eq-retam3}
+
+This procedure is iterated until the refined target matrix stabilizes. Once convergence is reached, the final transformation is obtained as
+
+$$
+\mathbf{S} = \operatorname{Procrustes}(\mathbf{A};\, \mathbf{H}_k^\ast),
+$$ {#eq-retam4}
+
+and the final rotated loading matrix is
+
+$$
+\mathbf{P} = \mathbf{A}\mathbf{S}.
+$$ {#eq-retam5}
+
+For an oblique solution, the corresponding factor correlation matrix is
+
+$$
+\mathbf{\Phi} = \mathbf{S}^{-1} {\mathbf{S}^{-1}}^\top.
+$$ {#eq-retam6}
+
+The SLiD algorithm applies a related target-refinement logic to the bifactor case [@garciagarzon_2019]. It starts from a Schmid--Leiman solution and then iteratively updates the target matrix using differences among squared normalized loadings. The purpose is to retain the hierarchical intuition of Schmid--Leiman while reducing the bias introduced by its rank-deficient constraints. In this sense, SLiD is neither a purely analytic rotation nor a purely confirmatory target rotation. It is an empirical target-rotation procedure that uses the data to decide which loadings should be treated as salient and which should be targeted toward zero.
+
+The GSLiD algorithm developed in the first article of this dissertation extends this logic to structures with multiple general factors. This extension is necessary because the traditional SLiD algorithm assumes a single general factor, whereas many psychological theories involve several broad domains. GSLiD therefore generalizes the iterative difference-based target-refinement strategy so that several bifactor structures can be estimated simultaneously in a single exploratory model.
+
+## Critics of bifactor models
+
+There are legitimate concerns about the use and interpretation of bifactor models. One concern is the status of the group factors. In the orthogonal bifactor model, group factors are defined as sources of common variance that remain after the general factor has been removed. Therefore, they are not the same constructs as the corresponding factors in a correlated-factors model. A depression factor in a correlated-factors model, for example, represents the total common variance among depression items. A depression group factor in a bifactor model represents only the residual depression-related variance that is not shared with the general factor. This distinction is essential, but it is often overlooked in applied research.
+
+A second concern is that the group factors may be unstable or poorly reliable. This can happen because group factors are frequently defined by a small number of indicators and because the general factor may absorb a large proportion of the common variance. Under these conditions, the remaining group-factor variance can be weak, heterogeneous, or difficult to distinguish from sampling error. As a consequence, group-factor scores may be unreliable even when the overall bifactor model fits well [@bonifay_2017; @sellbom_2019].
+
+A third concern is the interpretation of the general factor itself. The general factor is sometimes treated as if it necessarily represented the substantive construct of interest. However, a strong general factor can also absorb nuisance variance, method effects, response styles, or other sources of covariance that are not substantively intended by the researcher [@reise_2016]. For example, if a large subset of items is affected by acquiescence or by similar wording, the general factor may partially reflect this method source rather than the psychological construct that the scale was designed to measure. In that situation, the better fit of a bifactor model does not automatically imply a better substantive explanation.
+
+These concerns are especially important because bifactor models often display better global fit than alternative models. Part of this advantage is expected: bifactor models can be less restrictive than higher-order models because they do not impose the same proportionality constraints between general and group-factor loadings [@gignac_2016; @molenaar_2016]. However, better fit is not the same as better measurement. A bifactor model can fit well while producing weak group factors, ambiguous general-factor interpretations, or parameter estimates that are difficult to validate externally [@eid_2018; @markon_2019].
+
+For these reasons, the aim of this dissertation is not to defend bifactor models as universally superior. Rather, the aim is to improve the conditions under which they can be explored, estimated, and interpreted. Exploratory bifactor models are useful when they are treated as tools for investigating hierarchical hypotheses, not as automatic evidence that a general factor is substantively meaningful. This requires examining the recovery of both general and group factors, allowing for cross-loadings and correlations when theory and data require them, and avoiding overly restrictive specifications that hide important dependencies.
+
+<!-- @cudeck_1992 -->
+<!-- empirical underidentification @green_2018 -->
+
+## The natural generalization of the bifactor model
+
+The traditional bifactor model assumes one general factor and one group factor per item. However, this structure is too narrow for many psychological theories. Several extensions have therefore been proposed to accommodate multiple broad sources of variance. One example is the two-tier factor model, which allows more than one general factor in an item factor analysis framework [@cai_2010]. Another example is the two-layer hierarchical model, which seeks simple structure and nested factors within broader latent domains [@tian_2021]. These developments reflect the same general motivation: psychological instruments often measure several broad domains, and each of these domains may contain more specific facets.
+
+Despite the substantive appeal of multiple-general-factor structures, they are difficult to estimate, interpret, and even specify when the number of items and facets is large. A common workaround is to analyze each broad domain separately. For example, a researcher may fit one bifactor model to the items of Neuroticism, another bifactor model to the items of Extraversion, and so on. Although this strategy is convenient, it implicitly assumes that the domains are statistically independent at the level of estimation. This assumption is rarely neutral, because correlations among general factors and cross-loadings across broad domains are theoretically plausible in many psychological systems.
+
+The consequence is that a domain-by-domain analysis can hide precisely the dependencies that exploratory bifactor analysis is meant to reveal. If an item mainly assigned to one broad domain also loads on another general factor, fitting independent bifactor models will force that item loading to be absorbed by the domain analyzed in isolation. Similarly, if the general factors are correlated, estimating them in separate models prevents the researcher from distinguishing between true cross-domain associations and cross-loadings that connect specific item content to multiple broad traits. Thus, the divide-and-conquer strategy can induce biased loadings and misleading structural interpretations.
+
+From a measurement perspective, this is not a minor nuisance. In large instruments and modern item pools, even modest cross-domain dependencies can accumulate into systematic misspecification. When hierarchical models are used to justify scoring decisions, such as broad-domain scores and subscores, structural misspecification directly threatens validity. A model may appear acceptable within each domain while still allocating variance to the wrong level or to the wrong broad dimension when the full structure is considered.
+
+Confirmatory models are often too restrictive for this setting. Fully specified bifactor confirmatory models require the researcher to decide in advance which cross-loadings and factor correlations are absent. When this prior specification is wrong, parameter estimates can be biased and model fit can be misleading. Post hoc modifications may improve fit, but they do not provide a principled exploratory strategy. What is needed is a model that is hierarchical and exploratory at the same time: hierarchical because it distinguishes between general and specific sources of variance, and exploratory because it can detect unexpected cross-loadings and dependencies without collapsing into an uninterpretable unrestricted solution.
+
+![Exploratory bifactor theory.](figures/exploratory_bifactor_labels.pdf){width=80%}
+
+![Two independent exploratory bifactor models.](figures/missing_arrows.pdf){width=50%}
+
+![Exploratory bifactor model with multiple general factors.](figures/exploratory_bifactor.pdf){width=50%}
+
+This is the natural motivation for exploratory bifactor analysis with multiple general factors. Instead of estimating several independent bifactor models, all broad domains are estimated simultaneously. In this framework, items may load on their intended general factor, but they may also display cross-loadings on other general factors when the data support them. Likewise, the general factors can correlate with one another, and the group factors can be estimated as the residual domain-specific components that remain after the broad factors have been taken into account.
+
+The extended target criterion provides the rotation framework needed for this type of model [@zhang_2019]. In a target-rotation setting, the researcher can specify the expected bifactor structure while leaving selected elements free to be estimated. This makes it possible to encode theory without forcing the model to ignore plausible complexities. GSLiD builds on this logic by constructing and refining targets for multiple-general-factor bifactor structures, thereby allowing several bifactor domains to be estimated in a single exploratory model. This avoids the main limitation of the divide-and-conquer strategy and provides a more coherent framework for studying hierarchical psychological structures.
+
+\newpage
+
+# Chapter 3: The bifactor model with multiple general factors: the GSLiD algorithm
+
+The first journal article of this dissertation proposed the Generalized Schmid--Leiman iterative Difference-based target rotation algorithm (GSLiD), a complete exploratory method for estimating bifactor structures with multiple general factors. 
+
+The Generalized Schmid–Leiman iterative Difference‑based Target Rotation (GSLiD; @jimenez_2023a) algorithm extends the traditional Schmid–Leiman transformation to allow multiple correlated general factors and to incorporate an extended target criterion [@zhang_2019] that can simultaneously penalize loadings and factor correlations. The algorithm proceeds in three stages:
+
+Initial target creation – a partially specified target matrix is derived from an initial Schmid–Leiman solution (using an orthogonal Procrustes rotation). The target captures the expected structure of both group and general loadings and is updated iteratively by computing the one‑lagged differences of sorted, normalized loadings. Entries exceeding a data‑driven cut‑off are fixed to one; others are set to zero.
+
+Iterative target refinement – the algorithm alternates between (a) an orthogonal or oblique Procrustes rotation of the unrotated loadings toward the current target, and (b) a target‑updating step that recalculates the cut‑offs based on the rotated loadings. This cycle repeats until the target stabilizes (no change in the target matrix between successive iterations) or a user‑defined maximum number of iterations is reached.
+
+Final solution extraction – once convergence is achieved, the final rotated loadings (and the corresponding factor correlation matrix) represent the estimated bifactor structure with multiple general factors. The resulting loadings satisfy the desired orthogonality constraints (or an acceptable approximation when an oblique rotation is used) and reflect the full pattern of cross‑loadings and general‑factor correlations.
+
+The GSLiD algorithm is implemented in the R package `bifactor` (version 0.1.0) and is available as the function `GSLiD`. Its computational efficiency makes it suitable for large item pools and high‑dimensional data, and its flexibility accommodates both orthogonal and oblique solutions in both the general and specific factors.
+
+\includepdf[pages=-,pagecommand={},width=\textwidth]{publications/jimenez_2023a.pdf}
+
+# Chapter 4: Dimensionality assessment: Hierarchical Exploratory Graph Analysis
+
+Even if an estimation framework is available and works well, applied researchers face a prior question: how many group factors and how many general factors should be extracted? Dimensionality decisions are foundational in test construction and validation, yet simulation evidence and practical guidance have historically focused on simpler settings (often unidimensional or second-order models), leaving a gap for the broader class of bifactor structures with multiple general factors. 
+
+A key technical nuance here is that second-order models and bifactor models are only equivalent under particular proportionality constraints. When those constraints do not hold, applying tools designed for second-order structures may not reliably characterize the dimensionality of unrestricted bifactor configurations. This strengthens the case for dedicated factor-retention and dimensionality methods for the general factor and multiple general bifactor setting.
+
+Hierarchical Exploratory Graph Analysis [hierEGA; @jimenez_2023b] extends the network‑psychometrics approach to bifactor structures with multiple general factors. The procedure consists of:
+
+**Gaussian graphical modeling (GGM)**. A partial correlation matrix is estimated from the observed data using the graphical lasso (GLASSO) with an Extended Bayesian Information Criterion (EBIC) tuning parameter. This yields a sparse precision matrix and a corresponding network of items.
+
+**Community detection**. The Louvain algorithm is applied to the GGM to identify clusters (communities) of items that are more strongly connected within the cluster than between clusters. The leading eigenvector (LE) community detection is first performed on the raw correlation matrix to determine whether the data are unidimensional (LE yields a single cluster) or multidimensional (LE yields multiple clusters).
+
+**Hierarchical clustering**. The lowest‑level Louvain communities are interpreted as group factors. If a higher‑level cluster is detected (i.e., if the Louvain solution yields a second tier of communities), that cluster is taken as the set of general factors. Because the Louvain algorithm enforces disjoint communities, the method is inherently oblique (general factors are allowed to correlate). A second‑order EGA (hierEGA‑FS) can be derived by applying the Louvain algorithm to factor‑score correlations obtained from the first‑order solution, yielding an additional layer of general factors.
+
+Empirical simulations demonstrated that hierEGA attains higher hit rates for detecting the dimensionality of both group‑ and general‑factor dimensionality than Parallel Analysis, especially under detrimental conditions like low sample sizes and weak loadings.
+
+The hierEGA approach is implemented in the R package `EGAnet` (version 1.1.0) and is accessed through the function `hierEGA`. 
+
+\includepdf[pages=-,pagecommand={},width=\textwidth]{publications/jimenez_2023b.pdf}
+
+\newpage
+
+# Chapter 5: An empirical application in the field of Computational Thinking
+
+[@jimenez_2024]
+
+\includepdf[pages=-,pagecommand={},width=\textwidth]{publications/jimenez_2024.pdf}
+
+
+\newpage
+
+# Chapter 6: The Orthoblique Rotation
+
+orthogonal [@jennrich_2001] and oblique case [@jennrich_2002].
+
+## Traditional optimization techniques
+
+Suppose that we want to minimize a function $\tilde{f}$ whose domain is in $\mathbb{R}^{n \times p}$. A second-order Taylor expansion around a point $\mathbf{V} \in \mathbb{R}^{n\times p}$ gives us a quadratic approximation as an alternative to minimize:
+$$
+\tilde{f}(\mathbf{V}) \approx m(\mathbf{X}) = \tilde{f}(\mathbf{V}) + \text{grad}\tilde{f}(\mathbf{V})^\top (\mathbf{X} - \mathbf{V}) + \frac{1}{2} (\mathbf{X} - \mathbf{V})^\top \text{Hess}\tilde{f}(\mathbf{V}) (\mathbf{X} - \mathbf{V}),
+$$
+where $\text{grad},\tilde{f}$ is the gradient of $\tilde{f}$ and $\text{Hess},\tilde{f}$ is the matrix of second-order derivatives. Taking the gradient of $m(\mathbf{X})$ and setting it to $0$, we obtain a minimum at
+$$
+\widehat{\mathbf{X}} = \mathbf{V} - \text{Hess}\tilde{f}(\mathbf{V})^{-1} \text{grad} \tilde{f}(\mathbf{V}).
+$$
+What appears to the right of $\mathbf{V}$ is known as the descent direction. If we take $\mathbf{V}$ as an initial point, then we can interpret $\widehat{\mathbf{X}}$ as an estimate of the true vector that minimizes $\tilde{f}$. Therefore, the equation of the quadratic model becomes more accurate the more we iterate it, eventually converging to an optimal point. 
+
+Sometimes, it is difficult to find an expression for $\text{Hess}\tilde{f}$ and it can be costly to compute the solution. The gradient descent method assumes that $\text{Hess}\tilde{f}(\mathbf{V}) = \mathbf{I}$, being less precise but faster to solve. It is also useful to calculate a step size $t$ that chooses an optimal distance to move in the descent direction, $\widehat{\mathbf{X}} = \mathbf{V} - t \text{grad}\tilde{f}(\mathbf{V})$.
+
+## Optimization on nonlinear manifolds
+
+A manifold is...
+
+Let $\tilde{f}$ be a function with domain in $\mathbb{R}^{n\times p}$. Suppose that we want to constraint the solution to the subspace $\mathcal{M}$. We may define another function $f$ with domain on $\mathcal{M}$ such that 
+$$
+\underset{\mathbf{X} \in \mathcal{M}}{\text{argmin}} \tilde{f}(\mathbf{X}) = \text{argmin} f(\mathbf{X}).
+$$ 
+Our aim is to obtain an expression for the gradient of $f$, which is different to that of $\tilde{f}$ if $\mathcal{M}$ is not a linear space. This is easy to see after looking at the popular definition of derivative. The partial derivative of $\tilde{f}$ at $\mathbf{X}$ for the $i,j$ element of $\mathbf{X}$ is usually defined by 
+$$
+\lim_{\epsilon_{ij} \to 0} \frac{\tilde{f}(\mathbf{X} + \boldsymbol{\epsilon}) - \tilde{f}(\mathbf{X})}{\boldsymbol{\epsilon}},
+$$ 
+where $\boldsymbol{\epsilon}$ is a zero matrix and the $i,j$ element tends to 0. This definition makes no sense when we move on a nonlinear manifold $\mathcal{M}$ since taking a plain difference does not guarantee that the result lies on $\mathcal{M}$. Fortunately, there is another definition of derivative that applies to any manifold.
+
+When $\mathcal{M} = \mathbb{R}^{n\times p}$, by endowing this space with a notion of inner product (e.g., $\| \mathbf{U} - \mathbf{V}\|^2$) we turn $\mathcal{M}$ into an Euclidean space. This way, if $f$ is differentiable, we can exploit the gradient $\text{grad}f$ and hessian $\text{Hess}f$ for optimization purposes.
+
+On the contrary, when $\mathcal{M}$ is a nonlinear space, choosing a notion of inner product over this space will turn it into a Riemannian manifold. This way, if $f$ is differentiable, we can exploit the Riemannian gradient $\text{grad}f$ and Riemanian hessian $\text{Hess}f$ for optimization purposes.
+
+A Taylor expansion of $h(\mathbf{x})$ around a point $\mathbf{v}$:
+$$
+h(\mathbf{x}+\mathbf{v}) = h(\mathbf{x}) + \text{D}h(\mathbf{x})[\mathbf{v}].
+$$
+We know that $h(\mathbf{x})=0$ because $\mathbf{x} \in \mathbb{M}$. Therefore, for $h(\mathbf{x}+\mathbf{v})$ to stay on $\mathbb{M}$, we also need that $\text{D}h(\mathbf{x})[\mathbf{v}]=0$.
+
+We have to find the kernel of $\text{D}h(\mathbf{x})[\mathbf{v}]$:
+$$\text{ker} \, \text{D}h(\mathbf{x})[\mathbf{v}]= \{\mathbf{v} \in \mathbb{R}: \text{D}h(\mathbf{x})[\mathbf{v}]=0\} \coloneq \mathcal{T}_\mathbf{x}\mathcal{M}$$.
+
+### The Riemannian gradient
+
+In a linear space, the gradient $\text{grad}\tilde{f}$ at a point $\mathbf{X} \in \mathbb{R}^{n\times p}$ is the unique element $\mathbb{R}^{n\times p}$ that satisfies $\text{D}\tilde{f}(\mathbf{X})[\mathbf{V}] = \text{trace}(\mathbf{V}^\top \text{grad}\tilde{f}(\mathbf{X}))$ for any $\mathbf{V} \in \mathbb{R}^{n\times p}$, where $\text{D}\tilde{f}(\mathbf{X})[\mathbf{V}]$ denotes the derivative of $\tilde{f}$ at $\mathbf{X}$ along the direction $\mathbf{V}$ (the differential).
+
+Now, notice that any member of $\mathbb{R}^{n \times p}$ can be decomposed in orthogonal complements. That is, the gradient of $\tilde{f}$ evaluated at $\mathbf{X}$ may be decomposed in an element belonging to the tangent space, $\mathcal{T}_\mathbf{X}\mathcal{M}$, and another belonging to the normal space, $\mathcal{N}_{\mathbf{X}} \mathcal{M}$: \begin{equation} \label{orth_compl}
+\text{grad}\tilde{f}(\mathbf{X}) = \text{grad} \tilde{f}(\mathbf{X})_\parallel + \text{grad} \tilde{f}(\mathbf{X})_\perp,
+\end{equation} where $\text{grad} \tilde{f}(\mathbf{X})_\parallel$ and $\text{grad} \tilde{f}(\mathbf{X})_\perp$ are the projections of $\text{grad}\tilde{f}(\mathbf{X})$ onto the tangent space and the normal space, respectively (p. 47; Absil et al. (2009)).
+
+With these definitions, the Riemannian gradient at $\mathbf{X}$, $\text{grad}f(\mathbf{X})$, can be defined as the unique element of $\mathcal{T}_\mathbf{X}\mathcal{M}$ that satisfies $\text{D}f(\mathbf{X})[\mathbf{V}] = \text{trace}(\mathbf{V}^\top \text{grad}f(\mathbf{X}))$ for any $\mathbf{V} \in \mathcal{T}_\mathbf{X}\mathcal{M}$ (Definition 3.31; Absil et al. (2009)).
+
+Using (\ref{orth_compl}), we arrive at the following identities for any $\mathbf{V} \in \mathcal{T}_\mathbf{X}\mathcal{M}$: 
+$$
+\begin{aligned}
+\text{trace}\left( \mathbf{V}^\top \text{grad}\tilde{f}(\mathbf{X})_\parallel \right) &= \text{trace}\left( \mathbf{V}^\top (\text{grad}\tilde{f}(\mathbf{X}) - \text{grad}\tilde{f}(\mathbf{X})_\perp) \right) \\
+&= \text{trace}\left( \mathbf{V}^\top \text{grad}\tilde{f}(\mathbf{X}) \right) - \text{trace}\left( \mathbf{V}^\top \text{grad}\tilde{f}(\mathbf{X})_\perp \right) \\ 
+&= \text{trace}\left( \mathbf{V}^\top \text{grad}\tilde{f}(\mathbf{X}) \right), \quad{\text{because }} \mathbf{V} \text{ is orthogonal to }\text{grad}\tilde{f}(\mathbf{X})_\perp, \\
+&= \text{D}\tilde{f}(\mathbf{X})[\mathbf{V}] \\
+&= \text{D}f(\mathbf{X})[\mathbf{V}], \quad{\text{because }} \mathbf{V} \in \mathcal{T}_\mathbf{X}\mathcal{M}.
+\end{aligned}
+$$ 
+Hence, $\text{grad}f(\mathbf{X}) = \text{grad} \tilde{f}(\mathbf{X})_\parallel$ (equation 3.37; Absil et al. (2009)). In other words, the projection of the euclidean gradient onto the tangent space of $\mathcal{M}$ (i.e., $\text{grad} \tilde{f}(\mathbf{X})_\parallel$) is the gradient of $f$ (i.e., the gradient of $\tilde{f}$ when its domain is restricted to $\mathcal{M}$).
+
+From here, our job is to find an expression of $\text{grad}\tilde{f}(\mathbf{X})_\perp \in \mathcal{N}_{\mathbf{X}} \mathcal{M}$ to get the Riemannian gradient from (\ref{orth_compl}) or to directly find an expression for it. In the example below, I will do the latter.
+
+### Projection
+
+Suppose that we want to constraint a parameter vector to sum up to 0 such that $\mathcal{M} = \{\mathbf{x} \in \mathbb{R}^3: x_1 + x_2 + x_3 = 0\}$. To optimize this problem, we need to \textbf{project the ordinary or euclidean gradient} of the objective function onto the tangent space of $\mathcal{M}$ (i.e., the Riemannian gradient).
+
+First, we need to propose a defining equation for the constrained parameter vector:
+$$
+h: \mathbb{R}^3 \mapsto \mathcal{M} : \mathbf{x} \mapsto h(\mathbf{x}) = x_1 + x_2 + x_3 = 0.
+$$ 
+The tangent space of $\mathcal{M}$ is defined as the kernel of the differential of the defining equation $h$, 
+$$
+\mathcal{T}_\mathbf{x}\mathcal{M} = \text{ker} \, \text{D}h(\mathbf{x}) = \{\mathbf{z} \in \mathbb{R}^3: z_1 + z_2 + z_3 = 0 \}.
+$$
+Now, we need to find a basis for $\mathcal{T}_\mathbf{x}\mathcal{M}$. That is, we seek for a matrix $\mathbf{V}$ such that any vector in $\mathcal{T}_\mathbf{x}\mathcal{M}$ can be represented as a linear combination of it (i.e., $\mathcal{T}_\mathbf{x}\mathcal{M} = \mathrm{span}\left(\mathbf{V}\right)$).
+A suitable basis matrix is the following: 
+$$
+\mathbf{V} = \begin{bmatrix}
+-1 & -1 \\
+1 & 0 \\
+0 & 1
+\end{bmatrix},
+$$ 
+since any $\mathbf{Z} \in \mathcal{T}_\mathbf{x}\mathcal{M} = \mathbf{Vy}$ for some $\mathbf{y} \in \mathbb{R}^2$ (the dimensionality of our problem is two because we have three unknowns and one restriction).
+
+Now, considering that $\text{grad} \tilde{f}(\mathbf{X})_\parallel = \mathbf{Vy}$ for some $\mathbf{y} \in \mathbb{R}^2$, we substitute in (\ref{orth_compl}) to get 
+$$
+\begin{aligned}
+\mathbf{V}^\top (\text{grad}\tilde{f}(\mathbf{X}) - \text{grad} f(\mathbf{X})_\parallel) &= \mathbf{V}^\top \text{grad} \tilde{f}(\mathbf{X})_\perp \\
+\mathbf{V}^\top (\text{grad}\tilde{f}(\mathbf{X}) - \mathbf{Vy}) &= \mathbf{0}, \quad{\text{since } \mathbf{V} \in \mathcal{T}_\mathbf{x}\mathcal{M} \text{ and } \text{grad} \tilde{f}(\mathbf{X})_\perp \in \mathcal{N}_\mathbf{x}\mathcal{M}}.
+\end{aligned}
+$$ 
+So, we only need to solve for $\mathbf{y}$ in the above equation to find and expression for the Riemannian gradient parameterized as $\mathbf{Vy}$: 
+$$
+\mathbf{y} = (\mathbf{V}^\top \mathbf{V})^{-1} \mathbf{V}^\top \text{grad}\tilde{f}(\mathbf{X}).
+$$
+Therefore, the Riemannian gradient is
+$$
+\text{grad} f(\mathbf{X}) = \mathbf{V}^\top(\mathbf{V}^\top \mathbf{V})^{-1} \mathbf{V}^\top \text{grad}\tilde{f}(\mathbf{X}).
+$$
+This is similar to the common expression used to find the linear regression coefficients from a matrix of predictors.
+
+### Retraction
+
+We must also take care of the updating procedure. When we get a descent direction $\mathbf{V}$, the updated parameters $\mathbf{X}^* = \mathbf{X}_k + t\mathbf{V}$, where $t$ is a step size, may not lie on the manifold $\mathcal{M}$ anymore. We want that $\mathbf{X}_{k+1}$ lies on $\mathcal{M}$. To do this, we project $\mathbf{X}^*$ back to the manifold $\mathcal{M}$ using **parallel or vector transport**. Parallel transport is the shortest path connecting $\mathbf{X}^*$ in $\mathbb{R}^{n\times p}$ and $\mathbf{X}_{k+1}$ in $\mathcal{M}$. Sometimes, the formula for parallel transport is very complex or it is not analytically tractable. It may also be too expensive to compute. As an alternative, a **retraction** $R_\mathbf{X}$ is used. Retractions are functions that must satisfy two conditions.
+
+A retraction $R_\mathbf{X}: \mathbb{R}^{n\times p} \mapsto \mathcal{M}: t \mapsto R_\mathbf{X}(t)$ must satisfy (1) $R_\mathbf{X}(0) = \mathbf{X}$ and (2) $R_\mathbf{X}(t \mathbf{V})^\prime |_{t=0} = \mathbf{V}$ for any $\mathbf{X} \in \mathcal{M}$ and $\mathbf{V} \in \mathcal{T}_\mathbf{X}\mathcal{M}$ (Definition 4.1.1; Absil et al. (2009)).
+
+In our example, if $\mathbf{x}^* = \mathbf{x}_{k} + t\mathbf{v}$, then $R_\mathbf{x}(t\mathbf{v}) = \mathbf{x}^* - \frac{1}{3}\mathbf{1}^\top\mathbf{x}^*$ is a suitable retraction that satisfies both conditions. Another possible retraction is $R_\mathbf{x}(t\mathbf{v}) = \frac{\mathbf{x}^*}{\mathbf{1}^\top\mathbf{x}^*}$.
+
+## The orthoblique manifold in factor rotation
+
+\includepdf[pages=-,pagecommand={},width=\textwidth]{publications/jimenez_2025.pdf}
+
+### The Exploratory Bi-geomin and Bi-geomin with multiple general factors
+
+[@jennrich_2012] shows a theorem that establish that after the first step of fitting an exploratory bifactor model, obliquely rotating the group factors using either oblimin or geomin criteria on $S$ columns of the unrotated $\Lambda$ yields a factor solution where the general factor is orthogonal to the group factors. However, this only happens as long as there exists crossloadings different from 0 in each item. This curious result...
+
+<!-- $$\hat{\Lambda}^{\overset{\top}{\ast}} \Delta Q_{\hat{\mathbf{\Lambda}}^\ast} \Phi^{-1} - 2\Delta Q_{\hat{\mathbf{\Phi}}}$$ {#eq-oblq_constraints} -->
+
+### Estimation of the random parameters with the orthoblique manifold
+
+# Chapter 7: General discussion
+## Summary of main results
+
+Taken together, this dissertation makes a coherent contribution to the modeling, identification, and application of bifactor structures with multiple general factors. More concretely, it moves from the estimation problem, to the dimensionality problem, and finally to an empirical application in the assessment of computational thinking.
+
+Across the simulation studies, the proposed methods showed higher accuracy and robustness than the benchmark approaches. This was especially clear when the data contained cross-loadings, correlated broad dimensions, or forms of population misspecification that are difficult to accommodate with more restrictive models. Importantly, the performance of the proposed methods remained stable across a wide range of conditions, including different numbers of general factors, different levels of factor loadings, and different sample sizes.
+
+As a result, this dissertation provides a unified methodological framework for studying bifactor structures with multiple general factors. This framework comprises the exploratory bifactor model with multiple general factors (EBFA-MGF), the Generalized Schmid–Leiman iterative Difference-based target rotation algorithm (GSLiD) for model estimation, hierarchical exploratory graph analysis (hierEGA) for dimensionality assessment, and an empirical demonstration of how these methods can be implemented in applied measurement research.
+
+### Contribution 1: A framework for jointly estimating bifactor structures with multiple general factors
+
+The first contribution of this dissertation is the development of an exploratory bifactor framework that allows several broad latent dimensions to be modeled jointly, rather than through separate bifactor analyses fitted independently for each domain. In the proposed EBFA-MGF framework, items may load on several general and group factors, and factors within the same layer may be correlated. These features are especially important when broad psychological domains are not independent and when large item pools contain dependencies that cannot be adequately represented by strictly separated hierarchical structures.
+
+Within this framework, the dissertation develops GSLiD, the Generalized Schmid–Leiman iterative Difference-based target rotation algorithm. GSLiD is based on partially specified target matrices and extends previous target-rotation approaches by allowing the researcher to impose structure while still leaving room for the data to reveal cross-loadings, correlated factors, and other forms of local or structural dependency. In addition, the use of an extended target criterion makes it possible to incorporate information from both factor loadings and factor correlations, thereby providing a more flexible approach to exploratory bifactor estimation.
+
+This contribution is relevant because it directly addresses the dependency problem in large hierarchical instruments. When broad domains are analyzed independently, correlations among general factors and cross-loadings across domains are necessarily ignored. As a consequence, variance may be allocated to the wrong level of the hierarchy, or structural relations may be mistaken for item-level cross-loadings. EBFA-MGF offers a principled alternative by estimating the complete hierarchical structure jointly, while preserving enough exploratory flexibility to detect misspecification that would remain hidden under more restrictive approaches.
+
+### Contribution 2: Evidence on the consequences of ignoring dependencies among general factors
+
+The second contribution of this dissertation is not only the proposal of a new model class, but also an evaluation of a common practice in applied bifactor modeling. A central argument developed throughout the dissertation is that fitting independent bifactor models by domain can obscure dependencies among broad traits and produce misleading structural interpretations. In particular, when general factors are treated as independent by design, their empirical associations may be displaced into other parts of the model, giving rise to biased estimates, artificial cross-loadings, or an inaccurate representation of the hierarchy.
+
+This issue is especially relevant in applied fields where substantive theories naturally involve several related broad dimensions. Examples include models of psychopathology, personality, intelligence, and educational abilities, where the main question is often not whether a single general factor exists, but how many broad dimensions should be distinguished, how these dimensions relate to one another, and which items or facets are primarily associated with each level of the hierarchy.
+
+For these reasons, the dissertation positions EBFA-MGF as a practical response to a substantive and methodological limitation of standard bifactor practice. Rather than forcing the researcher to choose between overly restrictive confirmatory models and fragmented domain-by-domain analyses, the proposed framework allows broad dimensions, specific dimensions, and cross-domain dependencies to be evaluated within a single exploratory model.
+
+### Contribution 3: Dimensionality assessment tools for bifactor structures with multiple general factors
+
+The third contribution of this dissertation concerns the dimensionality problem. Before estimating a bifactor structure with multiple general factors, researchers must determine how many dimensions are present at each level of the hierarchy. However, most factor-retention procedures were not developed for this type of structure and therefore provide limited guidance when both group factors and several general factors may coexist.
+
+To address this problem, the dissertation provides one of the first systematic simulation studies focused on factor retention in bifactor structures with one or multiple general factors. A key methodological idea is to treat dimensionality assessment as a hierarchical problem. First, the number of group factors is estimated at the item level. Then, an oblique exploratory factor model is fitted, first-order factor scores are computed, and the number of general factors is estimated from the correlation structure of these scores. This workflow formalizes the dimensionality problem as a sequence of decisions that mirrors the organization of the hierarchical model itself.
+
+The dissertation evaluates classical retention methods, including variants of parallel analysis, and introduces a network-psychometric approach based on exploratory graph analysis with Louvain clustering. In addition, it extends this logic to the general-factor level through factor-score-based procedures. The simulation results showed that EGALV and PAPCA performed especially well for recovering group-factor dimensionality, whereas PAPCA-FS and EGALV-FS showed near-perfect accuracy for recovering the number of general factors across conditions. Importantly, this performance was maintained even under cross-loadings and population misspecification.
+
+This contribution provides applied researchers with empirically tested tools for answering a basic but difficult question: how many dimensions exist at each level of a complex hierarchical structure? This question becomes particularly important in large instruments, where even modest dependencies across domains can accumulate into systematic misspecification and compromise the interpretation of broad scores and subscores.
+
+### Contribution 4: An empirical application to computational thinking assessment
+
+The fourth contribution of this dissertation is an empirical demonstration showing that the proposed modeling ideas are not only methodological, but also useful for applied measurement. In the computational thinking study, a short-form version of the Beginners’ Computational Thinking Test for preschool students was validated. The dimensionality analyses indicated that computational thinking performance at this age can be represented by four specific abilities—sequences, simple loops, nested loops, and conditionals—organized under a broader general factor.
+
+This structure was then modeled using a bifactor framework, providing evidence that the instrument yields a meaningful general score while also preserving information about more specific computational thinking abilities. In this way, the empirical study illustrates how dimensionality assessment and hierarchical modeling can be combined to produce a psychometrically defensible score structure in an applied educational context.
+
+Importantly, the dissertation also translates this model into practice through the development of a Shiny web application that allows teachers and researchers to score examinees using the calibrated model. This scoring tool lowers the barrier for applying modern psychometric models in early-years computational thinking research and facilitates the use of validated scores in educational settings.
+
+This contribution is relevant because computational thinking interventions often rely on weak, ad hoc, or insufficiently validated measures. By combining modern dimensionality tools, bifactor modeling, and an accessible scoring implementation, the dissertation shows how hierarchical psychometric models can support both substantive theory and practical assessment.
+
+## Impact
+
+Grants
+Research projects
+Awards
+gentefi
+hierega applications
+new bifactor simulations for dimensionality assessment
+new papers on GSLiD
+Research stay in Brazil
+´´latent´´ workshop.
+
+### The bifactor and latent packages for the R language program
+
+Latent Variable Models (LVMs) are arguably one of the most powerful and flexible multivariate-statistical methods.
+They include Structural Equation Modeling (SEM), Item Response Theory (IRT), and Mixture Modeling (MM), which
+are considered the cornerstone of many analyses in a variety of fields to investigate unobserved variables like
+psychological traits, political attitudes, and labour inequalities. However, commercial software for LVMs is expensive
+and closed-source, limiting their access for underfunded researchers, students, and institutions.
+It is urgent to have a fast, robust and reliable open-source software for LVMs that follows the open-science
+principles of inclusion, equal opportunity, transparency, reproducibility, and accountability. We aim to develop
+LATENT, a free and open-source R-package for LVMs that significantly enhances the accessibility to cutting-edge
+statistical analyses across social, behavioural, educational, political, and health sciences.
+By offering a fast, flexible, and open-source alternative to commercial software, LATENT empowers researchers to
+conduct LVMs without financial or technical barriers.
+
+Current R-packages for LVMs are free and open-source but have three limitations: (L1): They are specialized in one
+type of LVM, forcing users to learn a different syntax and documentation for each kind of model they need. (L2):
+They are very slow compared to commercial software, making simulation research of new statistical methods
+challenging, especially with big data and complex models. (L3): They lack flexibility to support complex and
+customized models that are necessary for the increasing demands of scientists, urging them to either purchase
+software or modify their research question.
+This project aims to speed up the development of the R-package LATENT to overcome these limitations.
+First, LATENT offers an integrated, open-source solution that will support all the LVMs (e.g., SEM, IRT, MM) using a
+unified and user-friendly syntax (L1). Second, its core functionality is written in C++, making it faster than commercial
+software (L2). Third, users will be able to customize their models with a variety of parameter transformations, nonlinear constraints, and mix of loss functions, leading to the discovery of new statistical techniques (L3). These
+solutions will lower the technical and financial barriers of users, saving them time to focus on the advanced modeling
+capabilities of LATENT. 
+
+LATENT is integrated in the free and popular R-programming language. It is built upon cutting-edge packages (e.g.,
+Rcpp, data.table, armadillo, and lavaan), securing the safety and reproducibility of its functionality. All models and
+algorithms in LATENT will be fully documented, with user-friendly tutorials for applied researchers and technical
+explanations for incoming developers and contributors.
+A public forum (Discourse’s platform) will serve as the main hub for support, feedback, and collaborative decision-
+making. This way, other researchers can collaborate to LATENT by making requests and direct contributions –
+rewarded by co-authorship- that we will moderate for appropriate development. This will turn LATENT into a
+community-owned tool.
+Furthermore, LATENT is hosted publicly on GitHub as a free open-source software under the GPL-3 license, ensuring
+that all users can access, inspect, modify, and redistribute the codebase as long as it remains free. Therefore, we will
+use open protocols and standards that encourage community contributions through open-issue tracking,
+discussions, and version control.
+Additionally, all materials to be developed, including datasets, scripts, tutorials, and open access publications will be
+shared as educational resources through LATENT’s documentation and the package's website.
+This way, LATENT aligns with the core open-science principles of inclusion, equal opportunity, transparency,
+reproducibility, and accountability. 
+
+#### Project plan
+
+WP1: Writing fast C++ code for estimating LVMs.
+This WP represents the core of the project. We are already working on the package LATENT, obtaining a
+significant improvement in estimation speed. For instance, in a benchmark test comparing LATENT with the
+packages EGAnet, Turbofuns, and lavaan to estimate polychoric correlations between 100 variables with 6 response
+categories and 2000 subjects, LATENT was 1.6 times faster than EGAnet and Turbofuns, and 8 times faster than
+lavaan. This exemplifies that LATENT outperforms other implementations written in high-performance languages
+like C (EGAnet) and Fortran (Turbofuns). Right now, LATENT includes Exploratory and Confirmatory Factor Analyses
+(SEM methods), and Latent Class Analysis (MM method). With this project, we are committed to cover all the
+remaining LVMs while maintaining such high-performance benchmarks. Specifically, we will add SEM, Exploratory
+SEM, Dynamic SEM, IRT, (Mixture) Hidden Markov Models, multi-stage estimation (e.g., Structural After Estimation),
+and random effects for all of these models.
+WP2: Development of new extensions/flexible models.
+We want LATENT to extend beyond the capabilities of other LVM software. Therefore, we will add newly
+developed features such as the possibility of fitting SEM models without convergence problems due to Heywood
+cases or nonpositive-definite covariance matrices. In the same way, we will also enable the estimation of polychoric
+correlations that are positive-definite, avoiding the need for ad-hoc smoothing algorithms. Additionally, the model
+definition of any LVM will be made as flexible as possible, so the user may set parameter transformations, non-linear
+constraints, and equality and inequality constraints in any part of the model, fulfilling the necessities of the most
+complex research designs. WP1 and WP2 will be done by the co-applicant, supervised by the main applicant.
+WP3: Implementation of a user-friendly interface.
+A major limitation of current LVM packages is the use of different syntax formats. To ease the userinterface, we will use and expand on lavaan’s syntax, since it is the most used package for SEM in R and there exists
+an ecosystem of packages around it. This way, LATENT will be able to borrow from the work that has been already
+done in lavaan and will stay compatible with the remaining packages that belong to the lavaan’s ecosystem. This
+follows the open science principle of not re-doing work that has been done in other open-source software. The main
+applicant will lead the efforts on WP3, working closely with the co-applicant.
+WP4: Writing technical documentation.
+We will develop comprehensive technical documentation of the models and estimation methods
+implemented in LATENT. This will be published on GitHub and the package’s website,, improving on the transparency
+that is currently lacking in commercial software. This transparency will boost the confidence of the users in the
+functionality of the package. Furthermore, it will foster the engagement of the users in technical discussions and
+contributions, helping to create a long-term support for LATENT.
+WP5: Production of tutorials.
+A requirement for the widespread use of a new package is user-friendly tutorials. As we have the ambitious
+aim of implementing many LVMs, we will develop a variety of tutorials explaining their application and
+interpretation. These will be available as tutorial papers in open-access academic journals, as well as online casestudies for specific model applications-just like the R package blavaan includes "Basic" and "Examples/details" on its
+website. All the materials used in the tutorials will be accompanied with proper citations and references in line with
+DORA principles.
+Open Science Infrastructure 2024 full proposal - Small
+6
+WP6: Collaborations and dissemination
+First, once a year the co-applicant will travel for one month to visit another developer to code in
+collaboration with them. The first visit has been arranged with Prof. Yves Rosseel (developer of lavaan), to learn
+from his experience developing lavaan and how to integrate LATENT within the lavaan structure. Secondly, each
+member will do 2 trips a year to promote the package. These trips will encompass presentations or workshops at
+international conferences. We seek to present LATENT at methodological and applied conferences. In the
+methodological conferences (e.g., IMPS and EAM) we aim to reach users and contributors while in applied
+conferences (e.g., APS and NCME) we aim to reach applied researchers in areas such as social, behavioral, and
+educational sciences. WP4, WP5, and WP6 will be carried out by both researchers.
+
+#### Impact
+
+LATENT will enhance the efficiency, accessibility, and transparency of latent variable modeling by offering a fast,
+flexible, well-documented, and open-source alternative to commercial software. This will empower researchers to
+conduct advanced analyses without financial or technical barriers. We aim to reach researchers at different levels,
+like PhDs, professors, methodologists, statisticians, and consultants, to create a diverse and inclusive community of
+users that actively asks questions, submit requests, and make technical contributions. This endeavour aligns with
+the inclusion and accountability principles of open science.
+The package will also serve as an educational resource, improving statistical literacy and fostering methodological
+innovation through comprehensive tutorials and detailed documentation.
+To measure this impact, we will track CRAN downloads, citations, number of packages that depend on LATENT,
+participation in workshops, activity in the Discourse forum, and contributions made on GitHub.
+In the long term, we expect that LATENT becomes a reference tool in methodological training, course curricula, and
+applied research workflows. If this endeavour is accomplished, faculty, students, and institutions will also benefit
+financially, as adopting LATENT reduces or eliminates the need to purchase costly commercial software licenses.
+
+#### Sustainability
+
+LATENT will also be integrated into the lavaan ecosystem, increasing its long-term relevance and support within this
+broad statistical community. We have already established collaborations with several R developers—serving as
+named contributors in some cases—which facilitates the seamless integration and collaboration of LATENT with
+related packages. Furthermore, by acknowledging the co-authorship of contributors and new developers, LATENT
+aims to become a community-owned tool in such a way that does not depend on few maintainers, a common issue
+in both free and commercial software.
+To achieve this community-level status, we will ensure the long-term visibility of the package through peer-reviewed
+publications, online tutorials, conference presentations, workshops, and active involvement in the online discussion
+group. In addition, we will adopt open governance practices—such as community voting on major development
+directions—to encourage participation and shared responsibility for the package’s evolution.
+Finally, we will seek additional funding opportunities (e.g., Veni) to support further development. Collaborations with
+other research teams that actively use LATENT may also serve as a source of funding, as they may be willing to invest
+in the implementation of features aligned with their methodological needs.
+
+#### Software management
+
+LATENT is an R package designed to estimate a wide range of latent variable models (LVMs) commonly used in the
+social, political, educational, clinical, and behavioral sciences. Initially developed during the PhD research of Marcos
+Jiménez to implement novel models with complex hierarchical constraints not supported by existing software,
+LATENT has evolved into a more comprehensive and general-purpose LVM toolkit.
+Currently, LATENT supports Latent Class Analysis (LCA), Confirmatory Factor Analysis (CFA), and Exploratory Factor
+Analysis (EFA), offering features such as model fit indices, hypothesis testing, and advanced plotting and reporting
+tools. The package is under active development to expand its capabilities to include (Mixture) Hidden Markov
+Models (HMM), (Exploratory) Structural Equation Modeling (ESEM/SEM), and (Multidimensional) Item Response
+Theory (MIRT), which are the most common latent variable frameworks encountered in applied research.
+One of the most distinctive features in LATENT is its unified syntax interface, based on the popular lavaan syntax,
+which allows users to seamlessly specify and estimate different LVMs without switching between packages or
+learning multiple interfaces. This positions LATENT as a unique and user-friendly open-source solution for
+researchers who need flexibility, transparency, and computational efficiency in latent variable modeling.
+Its primary audience includes applied researchers, data analysts, and methodologists across disciplines who require
+powerful latent variable tools that are free, reproducible, and efficient, in line with the principles of open science.
+
+A second distinctive feature of LATENT is that all its optimization algorithms and statistical models are implemented
+from scratch in C++. The reason for this is that no package, either in R or C++, offers modern optimization techniques
+that makes possible the estimation of complex models with nonlinear parameter constraints, which are required by
+the increasing model complexity in the social sciences.
+2. How will you manage versioning of your software?
+We will follow Semantic Versioning (SemVer) principles to manage the versioning of LATENT library. Each release will
+be versioned in the format MAJOR.MINOR.PATCH:
+• MAJOR version increases will indicate major rewrites in the package with respect to the previous stable
+version, like when a new statistical framework is incorporated (e.g., Item Response Theory) with their own
+lavaan-like syntax and print, summary, and plot functions.
+• MINOR version increases will add new functionality that is compatible with the existing statistical
+frameworks that are already in LATENT (e.g., new estimators, nonlinear constraints, modeling capabilities,
+auxiliary functions to display results, etc).
+• PATCH version increases will be used for bug fixes and code optimization.
+This strategy aligns with open science principles by ensuring transparency, reproducibility, and accountability, while
+making it easier for users to track changes, cite software appropriately, and contribute to development.
+Currently, the first version of LATENT has been released under the number version 0.1.0.
+Versioning will be tracked using Git, and all releases will be tagged accordingly. We will also use a NEWS.md file to
+document changes for each version.
+3. How will you make your software publicly available? What licence will your software have?
+LATENT will be made publicly available through two main channels:
+• Development versions will be hosted on GitHub, allowing users to access the most recent features, report
+issues, and contribute to the project during its active development. Each release will follow semantic
+versioning and include detailed documentation.
+• Stable versions will be submitted to The Comprehensive R Archive Network (CRAN), the official and widely
+used repository for R packages. Submission to CRAN ensures that each release meets rigorous standards for
+software quality, documentation, and compatibility across platforms.
+LATENT will be released under the GNU General Public License v3 (GPL-3). This license ensures that the software
+remains free and open-source, allowing users to use, modify, and redistribute the package, provided that any
+derivative work remains under the same license. This licensing choice supports the principles of open science by
+promoting transparency, collaboration, and long-term accessibility.
+4. How will users of your software be able to cite your software?
+Users of LATENT will be able to cite the software in two ways:
+1. We plan to publish a peer-reviewed article that provides an overview and tutorial of the package. This
+publication will serve as the primary reference and citation for academic use, ensuring proper credit for the
+methodological contributions and facilitating traceability in scholarly work.
+2. In addition, once LATENT is available on CRAN, users will be able to retrieve the recommended citation
+using R’s native citation() function:
+citation(package = "latent")
+
+As it can be seen, this function automatically provides a formatted reference (e.g., in APA style), which includes
+author information, package version, and the CRAN URL, making it easy to cite LATENT in academic publications,
+reports, and teaching materials. In the future this automatic citation will include the academic papers, as well as the
+software manual.
+This dual approach ensures both academic recognition and practical ease of use, aligned with open science and
+software citation best practices.
+5. How will your software be documented? Please describe your plans for: user documentation, documentation for
+future developers and for installation requirements. Please provide links to documentation if already available.
+The LATENT package will provide comprehensive documentation tailored to two types of users: applied and
+methodological researchers (users), and future developers.
+For users, each function in LATENT will include structured documentation accessible via R’s built-in help system. This
+documentation will follow a consistent format:
+• Title: Clear and concise description of the function.
+• Description: Summary of the function's purpose.
+• Usage: Syntax and explanation of all function arguments.
+• Details: In-depth information on model specification, identification and estimation, interpretation of
+parameters, and guidance for handling issues such as non-convergence or improper solutions.
+• References: Relevant journal publications and theoretical foundations.
+• Examples: Reproducible code examples using real or simulated data to demonstrate the function’s
+application.
+A comprehensive PDF manual is already available via the GitHub repository:
+https://github.com/Marcosjnez/latent/blob/master/latent_0.1.0.pdf
+On the other hand, to support future contributors and maintainers, LATENT will include a developer guide that
+outlines:
+• The overall architecture and modular structure of the package.
+• Explanations for adding new models, parameter constraints, and features.
+• Guidelines for writing C++ code integrated via Rcpp.
+• Clear instructions on how to compile the package and run the build process.
+With regards to the installation of the software, we already provide instructions for installation.
+Dependencies (i.e., Rcpp, data.table, armadillo, and lavaan) will be listed in the package DESCRIPTION file and
+automatically managed through R’s package installation tools.
+
+We plan to build a dedicated website similar to the one developed for the blavaan package, to which the project
+leader also contributes.6. How will contribution guidelines and governance structure of your software be
+documented?
+The LATENT package is structured into distinct, modular components that facilitate collaboration and ensure
+maintainability. These components are organized into the following core modules, implemented in C++ and
+integrated with R via Rcpp:
+• Transformations: Compilation of functions (e.g., log, exp, logit, softmax, etc) to transform the parameters
+and compute their respective jacobian.
+• Estimators: Contains model-specific functions such as log-likelihoods, gradient vectors, and Hessian
+matrices that are necessary for the optimization algorithms.
+• Manifolds: Encodes nonlinear constraints required by different model specifications (e.g., simplex, unit
+vectors, orthogonal matrices, etc).
+• Optimization Algorithms: Includes methods such as gradient descent, Newton and pseudo-Newton
+approaches, and Expectation-Maximization.
+Each header file within these modules includes standardized metadata at the top of the file:
+/*
+* Author: Marcos Jimenez
+* email: m.j.jimenezhenriquez@vu.nl
+* Modification date: 03/02/2025
+*/
+This information provides transparency in authorship, supports traceability, and facilitates accountability in
+collaborative development. Additionally, the code is thoroughly commented to explain the role of functions, objects,
+and algorithmic steps, helping new developers understand and extend the code.
+A developer guide (in progress) will be provided via the GitHub repository and LATENT’s webpage. This guide will
+include:
+• A high-level overview of LATENT's architecture and modules (i.e., transformations, manifolds, estimators,
+and optimization algorithms).
+• Coding style conventions and documentation standards.
+• Instructions for contributing new models or optimization techniques.
+• Instructions for contributing new functions in LATENT and how to document them.
+• Testing procedures and expectations for code to ensure that new functionalities do not compromise
+previous implementations.
+LATENT will follow an open contribution model, where contributions can be made via GitHub pull requests.
+Contribution guidelines (e.g., via a CONTRIBUTING.md file) will outline how to submit patches, report issues, and
+participate in discussions. The core development will be overseen by both the main applicant and co-applicant, who
+will review contributions and maintain the overall coherence and quality of the codebase.
+We think that this governance model will support community engagement while ensuring solid code-updates and
+software integrity.
+
+7. How will your software be tested?
+Each function and module will be accompanied by tests that verify expected outputs for known inputs. These tests
+will cover both the R interface and the underlying C++ backend (e.g., estimation routines, gradient and Hessian
+calculations, optimization outputs). Testing will ensure:
+• Correct model estimates for benchmark datasets.
+• Proper handling of boundary conditions and missing values.
+• Accurate results across various latent variable model types.
+
+Also, LATENT will be validated against results and outputs from other established software (e.g., Mplus, lavaan,
+LatentGold) to verify that the estimated parameters and fit indices are equivalent when models are specified
+identically.
+In addition, automated testing will be set up using GitHub Actions, which will run the test suite on all supported
+operating systems (Linux, macOS, and Windows) whenever changes are pushed to the repository. This ensures
+compatibility and reproducibility across platforms.
+Given LATENT’s emphasis on speed, performance benchmarks will be included to monitor runtime and memory
+efficiency when handling big datasets. This will allow us to maintain our performance advantage as the codebase
+evolves.
+8. How will you check that it respects the licences of libraries and dependencies it uses?
+LATENT has a minimal set of dependencies, relying primarily on:
+• Rcpp for seamless integration between R and C++.
+• data.table for efficient data manipulation.
+• armadillo for high-performance computing of linear algebra operations and decompositions.
+• lavaan: for extracting the syntax of SEM models.
+All these packages are licensed under the GNU General Public License v3 (GPL-3), which is compatible with LATENT’s
+own licensing. As LATENT will also be distributed under GPL-3, we fully comply with the requirements of these
+dependencies—most importantly, ensuring that LATENT remains free and open-source.
+Of course, any new dependency added in the future will be carefully reviewed to ensure it is GPL-compatible.
+Moreover, we follow CRAN policies, which include automated checks on licensing compatibility before submission.
+This process guarantees that LATENT adheres to open-source legal standards while promoting transparent and
+ethical software development practices.
+9. How will your software be packaged and distributed?
+LATENT will be packaged as a standard R package, following the guidelines set by CRAN (The Comprehensive R
+Archive Network). This includes:
+• A properly structured package directory with a DESCRIPTION file (declaring metadata, dependencies, and
+license),
+• Namespace management through a NAMESPACE file,
+• Manual pages for each function (.Rd files),Vignettes and tutorial documents (vignettes/ directory) for
+in-depth examples and model walkthroughs.
+Regarding the distribution of LATENT, it will be available from two sources:
+• CRAN: Stable releases will be submitted to CRAN to ensure easy installation and long-term visibility within
+the R ecosystem. CRAN also performs rigorous checks across platforms (Windows, Linux, macOS), which
+guarantees compatibility and reliability. Code example to install LATENT from CRAN (in progress):
+install.packages("latent")
+• GitHub: Development versions will be hosted on GitHub (https://github.com/Marcosjnez/latent)
+to allow users early access to new features and to foster community contributions. GitHub will also serve as
+the platform for issue tracking, documentation updates, and community discussions. Code example to
+install LATENT from GitHub:
+devtools::install_github("Marcosjnez/latent")
+
+LATENT will provide multiple levels of user support to ensure accessibility and usability for researchers with varying
+levels of expertise.
+First, we will provide online documentation and tutorials. A full PDF manual will be available from the GitHub
+repository and the R’s built-in help system whereas online tutorials and vignettes covering typical use cases,
+advanced models, and troubleshooting tips will be available from the webpage of the package. These resources will
+guide users to apply the functions of the package independently and resolve common issues.
+Second, the GitHub repository and Discourse forum will be used to report bugs or technical problems, request new
+features, and ask questions about usage. This public forum encourages knowledge sharing, transparency, and
+community-based troubleshooting. Issues will be regularly reviewed and addressed by the development team of
+LATENT. Moreover, the Discourse’s platform will serve as the main hub for support, feedback, and collaborative
+decision-making. This way, other researchers can collaborate on LATENT by making requests and direct
+contributions –rewarded by co-authorship- that we will moderate for appropriate development. This will turn
+LATENT into a community-owned tool.
+Third, we plan to publish academic papers and tutorial articles demonstrating the use of LATENT in applied settings.
+These will serve as long-term references and teaching resources. We also aim to present the package at workshops
+and conferences related to open science, methodology, and R development, providing live demos and support.
+11. How do you plan to ensure long term maintenance of your software?
+We are committed to ensuring the long-term sustainability and maintenance of LATENT beyond the initial funding
+period. Even with no financial support, the intention of the development has always been to develop a free, opensource software that meets the increasing demands of current research. Because LATENT is also the central topic of
+the co-applicant's PhD, LATENT will remain the main research tool for developing and publishing new statistical
+methods.
+LATENT is designed with a modular C++ backend and a well-structured R interface, which makes it easier to maintain
+and extend in the future. This structure enables independent development of new models and methods without
+affecting the stability of the core codebase. Furthermore, by hosting LATENT on GitHub, we aim to build an active
+contributor community. Clear contribution guidelines, issue tracking, and transparency will help attract external
+collaborators and foster shared responsibility for future development.
+Also, LATENT will be aligned with the broader lavaan ecosystem not only with respect to the syntax for specifying
+models but also by mimicking the outputs that lavaan provides. This compatibility enhances the likelihood of
+continued relevance and support from the statistical programming community. In fact, this feature makes possible to
+use LATENT with other R packages from the lavaan ecosystem, such as semTools and tidySEM.
+Finally, we will seek additional funding opportunities (e.g., Veni) to support further development. Collaborations with
+other research teams that actively use LATENT may also serve as a source of funding, as they may be willing to invest
+in the implementation of features aligned with their methodological needs.
+This multi-pronged approach ensures that LATENT will remain a reliable, up-to-date, and impactful tool for
+researchers, aligned with the goals of open and sustainable science.
+
+
+
+#### Limitations and upcoming research
+
+
+\newpage
+
+# References
+
+\newpage
+
+# Acknowledgments{-}
